@@ -132,13 +132,15 @@ async function atualizar(aba, linha, vals) {
 // ═══════════════════════════════════════
 function ir(name, navIdx, btn) {
   document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
-  const sc = $('sc-'+name); if(sc) sc.classList.add('on');
+  const scId = name === 'integ-det' ? 'sc-integ-det' : 'sc-'+name;
+  const sc = $(scId); if(sc) sc.classList.add('on');
   if(btn) {
     const nav = btn.closest('nav');
     if(nav) nav.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
   }
   if(name==='decisoes') loadDecSemana();
+  if(name==='integracao') loadIntegracao();
   if(name==='cadastro' && !S.cad.length) loadCad();
 }
 
@@ -810,4 +812,174 @@ function converterUrlFoto(url) {
   const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if(m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
   return url;
+}
+
+// ═══════════════════════════════════════
+// INTEGRAÇÃO
+// ═══════════════════════════════════════
+async function loadIntegracao() {
+  const sw = getSemana();
+  // Semana anterior
+  const swAnt = new Date(sw.ini);
+  swAnt.setDate(swAnt.getDate() - 7);
+  const swAntFim = new Date(sw.ini);
+  swAntFim.setDate(swAntFim.getDate() - 1);
+  $('i-sw').textContent = fD(swAnt).slice(0,5) + ' – ' + fD(swAntFim).slice(0,5);
+
+  const ls = $('i-lista');
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
+
+  try {
+    const dados = await callScript({acao:'lerIntegracao'});
+    const lista = dados.values || [];
+    $('i-total').textContent = lista.length;
+
+    if(!lista.length){
+      ls.innerHTML = '<div class="empty"><div class="ei">🔗</div><p>Nenhuma integração pendente<br>desta semana.</p></div>';
+      return;
+    }
+
+    // Agrupar por capelão
+    const grupos = {}, ordem = [];
+    lista.forEach(d => {
+      const cp = d.capelao || 'Sem capelão';
+      if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
+      grupos[cp].push(d);
+    });
+
+    ls.innerHTML = ordem.map((cp, i) => `
+      <div class="acc-hdr" id="iacc-hdr-${i}" onclick="toggleIAcc(${i})">
+        <div class="acc-hdr-left">
+          <span style="font-size:14px">👤</span>
+          <span class="acc-hdr-eq">${cp}</span>
+          <span class="acc-cnt">${grupos[cp].length}</span>
+        </div>
+        <span class="acc-arr">▾</span>
+      </div>
+      <div class="acc-body" id="iacc-body-${i}">
+        ${grupos[cp].map(d => {
+          const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
+          return `<div class="dec-item" onclick="abrirDetInteg('${d.id}')" style="cursor:pointer">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div class="dec-name">${d.nome}</div>
+              <span class="badge ${ok?'bg-g':'bg-r'}">${ok?'❤️ SIM':'❤️ NÃO'}</span>
+            </div>
+            <div class="dec-sub">${d.assistido} · ${d.equipe}</div>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+
+    // Guardar dados para acesso rápido
+    S._integLista = lista;
+
+  } catch(e) {
+    ls.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Erro ao carregar.</p></div>';
+    console.error(e);
+  }
+}
+
+function toggleIAcc(idx) {
+  const hdr  = $('iacc-hdr-'+idx);
+  const body = $('iacc-body-'+idx);
+  const isOpen = hdr.classList.contains('on');
+  document.querySelectorAll('.acc-hdr').forEach(h=>h.classList.remove('on'));
+  document.querySelectorAll('.acc-body').forEach(b=>b.classList.remove('on'));
+  if(!isOpen){ hdr.classList.add('on'); body.classList.add('on'); }
+}
+
+function abrirDetInteg(id) {
+  const lista = S._integLista || [];
+  const d = lista.find(x => x.id === id);
+  if(!d) return;
+  S._curInteg = d;
+
+  $('id-dv').textContent  = d.dvVisita || d.data || '-';
+  $('id-eq').textContent  = d.equipe   || '-';
+  $('id-cp').textContent  = d.capelao  || '-';
+  $('id-as').textContent  = d.assistido|| '-';
+  $('id-nm').textContent  = d.nome     || '-';
+  $('id-tel').textContent = d.tel      || '-';
+  $('id-obs').textContent = d.obs      || '-';
+
+  const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
+  const integEl = $('id-integ');
+  integEl.innerHTML = ok
+    ? '<span class="badge bg-g">❤️ SIM</span>'
+    : '<span class="badge bg-r">❤️ NÃO</span>';
+
+  // Botão registrar — desabilitar se já integrado
+  const btnReg = $('btn-integ-reg');
+  if(ok){
+    btnReg.textContent = '✅ Já integrado';
+    btnReg.disabled = true;
+    btnReg.style.opacity = '0.5';
+  } else {
+    btnReg.textContent = '✅ Registrar Integração';
+    btnReg.disabled = false;
+    btnReg.style.opacity = '1';
+  }
+
+  ir('integ-det');
+}
+
+function abrirWpp1() {
+  const d = S._curInteg; if(!d) return;
+  const tel = '55' + (d.tel||'').replace(/\D/g,'');
+  const integrador = S.user?.nome || '';
+  const msg = encodeURIComponent(
+    `Oi, tudo bem? Aqui é o ${integrador} !!\n\n` +
+    `Estive com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
+    `Gostaria muito de saber como você está, como tem sido sua recuperação e sua saúde nesse momento. Estamos orando por você e crendo que Deus está cuidando de cada detalhe.\n\n` +
+    `Aproveito também para te fazer um convite especial: estamos com um curso gratuito chamado "Um com Deus", da Nova Igreja Batista. É uma oportunidade linda para fortalecer a fé, conhecer mais sobre Deus e pode ser feito online ou presencialmente, do jeitinho que for melhor pra você.\n\n` +
+    `Se quiser saber mais ou participar, estou aqui à disposição!`
+  );
+  window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${msg}`, '_blank');
+}
+
+function abrirWpp2() {
+  const d = S._curInteg; if(!d) return;
+  const tel = '55' + (d.tel||'').replace(/\D/g,'');
+  const msg = 'Parabéns pela sua decisão de seguir a Cristo! 🎉' +
+    '%20%0A%0AQuero te convidar para assistir às palestras UM COM DEUS, onde você vai fortalecer ainda mais sua fé. São gratuitas e acontecem num ambiente acolhedor: 👇🏼' +
+    '%20%0A%20%0A📍 *_Auditório da NOVA IGREJA BATISTA_*' +
+    '%20%0AAv. Torquato Tapajós, 4444 - Col. Santo Antônio' +
+    '%20%0ADomingos: 8h, 10h30, 16h e 18h30.' +
+    '%20%0ALocalizador: https://maps.app.goo.gl/DCnLW5b2qLubYCdv6' +
+    '%20%0AOutros endereços próximos a você: https://bit.ly/3YOWU5c' +
+    '%20%0A%20%0ASe não puder ir, acompanhe pelo YouTube:' +
+    '%20%0Ahttps://youtube.com/playlist?list=PLsToeSg6pZF90VbxctNhCkd8i8FC7DPpZ' +
+    '%20%0A%0AEstou à disposição para conversar! Que Deus te abençoe nessa caminhada. 😊';
+  window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${msg}`, '_blank');
+}
+
+async function registrarIntegracao() {
+  const d = S._curInteg; if(!d) return;
+  const btn = $('btn-integ-reg');
+  btn.disabled = true; btn.textContent = 'Registrando...';
+  load('Registrando integração...');
+  try {
+    // Gerar ID único
+    const idInteg = 'INT' + Date.now().toString(36).toUpperCase();
+    await callScript({
+      acao:      'gravarIntegracao',
+      idInteg:   idInteg,
+      idDecisao: d.id,
+      capelao:   S.user?.nome || d.capelao
+    });
+    unload();
+    // Atualizar localmente
+    d.integrado = 'Sim';
+    // Atualizar badge na tela
+    $('id-integ').innerHTML = '<span class="badge bg-g">❤️ SIM</span>';
+    btn.textContent = '✅ Já integrado';
+    btn.style.opacity = '0.5';
+    msg('✅ Integração registrada!', 'ok');
+    // Recarregar lista em background
+    loadIntegracao();
+  } catch(e) {
+    unload();
+    btn.disabled = false;
+    btn.textContent = '✅ Registrar Integração';
+    msg('Erro ao registrar: ' + e.message, 'er');
+  }
 }
