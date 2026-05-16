@@ -356,16 +356,60 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
   </div>
 </div>
 
-<!-- INTEGRAÇÃO -->
+<!-- INTEGRAÇÃO LISTA -->
 <div class="sc" id="sc-integracao">
-  <div class="hdr"><button class="hdr-back" onclick="ir('home')">←</button><div class="hdr-title">Integração</div><div style="width:40px"></div></div>
-  <div class="pg"><div class="empty"><div class="ei">🔗</div><p>Em desenvolvimento</p></div></div>
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('home')">←</button>
+    <div class="hdr-title">Integração</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg">
+    <div class="strip">
+      <div class="strip-row"><span class="strip-k">📅 Semana</span><span class="strip-v" id="i-sw"></span></div>
+      <div class="strip-row"><span class="strip-k">👥 Total</span><span class="strip-v" id="i-total">0</span></div>
+    </div>
+    <div id="i-lista"><div class="empty"><div class="ei">🔗</div><p>Carregando...</p></div></div>
+  </div>
   <nav class="nav">
     <button class="nb" onclick="ir('home',0,this)"><span class="ni">🏠</span>Início</button>
     <button class="nb" onclick="ir('decisoes',1,this)"><span class="ni">✝</span>Decisões</button>
     <button class="nb on" onclick="ir('integracao',2,this)"><span class="ni">🔗</span>Integração</button>
     <button class="nb" onclick="ir('aniversarios',3,this)"><span class="ni">🎂</span>Aniversários</button>
   </nav>
+</div>
+
+<!-- INTEGRAÇÃO DETALHE -->
+<div class="sc" id="sc-integ-det">
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('integracao')">←</button>
+    <div class="hdr-title">Detalhes</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg no-nav" style="padding-bottom:120px">
+    <div class="dg" style="margin-bottom:14px">
+      <div class="dr"><span class="dk">📅 Data Visita</span><span class="dv" id="id-dv"></span></div>
+      <div class="dr"><span class="dk">🏥 Hospital</span><span class="dv" id="id-eq"></span></div>
+      <div class="dr"><span class="dk">👤 Capelão</span><span class="dv" id="id-cp"></span></div>
+      <div class="dr"><span class="dk">🛏️ Assistido</span><span class="dv" id="id-as"></span></div>
+      <div class="dr"><span class="dk">👤 Nome</span><span class="dv" id="id-nm"></span></div>
+      <div class="dr"><span class="dk">📞 Telefone</span><span class="dv" id="id-tel"></span></div>
+      <div class="dr"><span class="dk">✝ Integrado</span><span class="dv" id="id-integ"></span></div>
+      <div class="dr"><span class="dk">📝 OBS</span><span class="dv" id="id-obs" style="white-space:pre-line"></span></div>
+    </div>
+
+    <!-- BOTÕES DE AÇÃO -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn" onclick="abrirWpp1()" style="background:#25d366;color:#fff;font-size:14px">
+        💬 Mensagem de Acompanhamento
+      </button>
+      <button class="btn" onclick="abrirWpp2()" style="background:#128c7e;color:#fff;font-size:14px">
+        ⛪ Convite Um com Deus
+      </button>
+      <button class="btn btn-p" id="btn-integ-reg" onclick="registrarIntegracao()" style="font-size:14px">
+        ✅ Registrar Integração
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ANIVERSÁRIOS -->
