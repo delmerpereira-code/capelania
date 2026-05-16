@@ -830,8 +830,11 @@ async function loadIntegracao() {
   ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
 
   try {
+    console.log('Carregando integração...');
     const dados = await callScript({acao:'lerIntegracao'});
+    console.log('Integração response:', JSON.stringify(dados).substr(0,200));
     const lista = dados.values || [];
+    console.log('Total integrações:', lista.length);
     $('i-total').textContent = lista.length;
 
     if(!lista.length){
@@ -873,8 +876,8 @@ async function loadIntegracao() {
     S._integLista = lista;
 
   } catch(e) {
-    ls.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Erro ao carregar.</p></div>';
-    console.error(e);
+    ls.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`;
+    console.error('Integração erro:', e);
   }
 }
 
@@ -893,8 +896,8 @@ function abrirDetInteg(id) {
   if(!d) return;
   S._curInteg = d;
 
-  $('id-dv').textContent  = d.dvVisita || d.data || '-';
-  $('id-eq').textContent  = d.equipe   || '-';
+  $('id-dv').textContent  = d.data     || '-';
+  $('id-eq').textContent  = d.hospital || d.equipe || '-';
   $('id-cp').textContent  = d.capelao  || '-';
   $('id-as').textContent  = d.assistido|| '-';
   $('id-nm').textContent  = d.nome     || '-';
@@ -963,7 +966,7 @@ async function registrarIntegracao() {
     await callScript({
       acao:      'gravarIntegracao',
       idInteg:   idInteg,
-      idDecisao: d.id,
+      idDecisao: d.idDecisao || d.id,
       capelao:   S.user?.nome || d.capelao
     });
     unload();
