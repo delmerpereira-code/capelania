@@ -755,7 +755,6 @@ async function onFotoChangeM(event) {
     formData.append('upload_preset', CLOUD_PRESET);
     formData.append('public_id', pin);
     formData.append('folder', 'capelania');
-    formData.append('overwrite', 'true');
 
     const resp = await fetch(CLOUD_URL, {method:'POST', body: formData});
     const data = await resp.json();
