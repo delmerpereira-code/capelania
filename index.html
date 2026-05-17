@@ -447,8 +447,17 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 
 <!-- ANIVERSÁRIOS -->
 <div class="sc" id="sc-aniversarios">
-  <div class="hdr"><button class="hdr-back" onclick="ir('home')">←</button><div class="hdr-title">Aniversariantes</div><div style="width:40px"></div></div>
-  <div class="pg"><div class="empty"><div class="ei">🎂</div><p>Em desenvolvimento</p></div></div>
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('home')">←</button>
+    <div class="hdr-title">Aniversariantes</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg">
+    <div class="search" style="margin-bottom:12px">
+      <input type="text" id="aniv-search" placeholder="Buscar membro..." oninput="renderAniv()" autocomplete="off">
+    </div>
+    <div id="aniv-lista"><div class="empty"><div class="ei">🎂</div><p>Carregando...</p></div></div>
+  </div>
   <nav class="nav">
     <button class="nb" onclick="ir('home',0,this)"><span class="ni">🏠</span>Início</button>
     <button class="nb" onclick="ir('decisoes',1,this)"><span class="ni">✝</span>Decisões</button>
