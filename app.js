@@ -944,6 +944,10 @@ function renderIntegLista() {
       return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
     });
   });
+  // Guardar lista ordenada para navegação com setas
+  S._integListaFiltrada = [];
+  ordem.forEach(cp => { S._integListaFiltrada = S._integListaFiltrada.concat(grupos[cp]); });
+
   ls.innerHTML = ordem.map((cp, i) => {
     const simCnt = grupos[cp].filter(d=>isIntegrado(d)).length;
     const naoCnt = grupos[cp].length - simCnt;
@@ -977,6 +981,13 @@ function renderIntegLista() {
   }).join('');
 }
 
+
+function navInteg(dir) {
+  const lista = S._integListaAtual || [];
+  const idx = (S._integIdx || 0) + dir;
+  if(idx < 0 || idx >= lista.length) return;
+  abrirDetInteg(lista[idx].id);
+}
 
 function proximoInteg(atual) {
   const lista = S._integLista || [];
@@ -1015,6 +1026,23 @@ function abrirDetInteg(id) {
 
   $('id-nm').textContent  = d.nome     || '-';
   $('id-dv').textContent  = d.data     || '-';
+
+  // Atualizar header com setas
+  const navNome = $('nav-nome'), navPos = $('nav-pos');
+  if(navNome) navNome.textContent = d.nome || '-';
+  // Calcular posição na lista do integrador
+  const listaInteg = (S._integListaFiltrada||S._integLista||[]).filter(x =>
+    (x.integrador||x.capelao||'') === (d.integrador||d.capelao||'')
+  );
+  const posAtual = listaInteg.findIndex(x => x.id === d.id);
+  if(navPos) navPos.textContent = (posAtual+1) + ' de ' + listaInteg.length;
+  // Guardar índice atual para navegação
+  S._integIdx = posAtual;
+  S._integListaAtual = listaInteg;
+  // Desabilitar setas nos extremos
+  const btnP = $('btn-prev'), btnN = $('btn-next');
+  if(btnP) btnP.style.opacity = posAtual <= 0 ? '0.3' : '1';
+  if(btnN) btnN.style.opacity = posAtual >= listaInteg.length-1 ? '0.3' : '1';
   $('id-eq').textContent  = d.hospital || d.equipe || '-';
   $('id-cp').textContent  = d.capelao  || '-';
   $('id-as').textContent  = d.assistido? '🛏️ '+d.assistido : '-';
