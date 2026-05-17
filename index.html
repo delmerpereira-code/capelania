@@ -703,10 +703,9 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
     </div>
     <div class="sh-body">
       <div class="f">
-        <label>Equipe / Hospital *</label>
-        <div class="sel-wrap"><select id="res-eq">
-          <option value="">Selecione a equipe</option>
-        </select></div>
+        <label>Equipe / Hospital</label>
+        <div id="res-eq-display" style="background:var(--g1);border:1.5px solid var(--g2);border-radius:var(--r);padding:14px 16px;font-size:15px;color:var(--navy);font-weight:600"></div>
+        <input type="hidden" id="res-eq">
       </div>
       <div class="f">
         <label>Data da Visita *</label>
