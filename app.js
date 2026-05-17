@@ -856,6 +856,25 @@ function renderSessao() {
 // FOTO — Cloudinary (upload direto, sem CORS)
 // ═══════════════════════════════════════
 const CLOUD_NAME   = 'divxtp2wh';
+
+// Comprime imagem antes de enviar — maxWidth em pixels, quality 0-1
+function comprimirImagem(file, maxWidth, quality) {
+  return new Promise((ok, er) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => ok(blob), 'image/jpeg', quality);
+    };
+    img.onerror = er;
+    img.src = url;
+  });
+}
 const CLOUD_PRESET = 'capelania';
 const CLOUD_URL    = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
@@ -879,8 +898,10 @@ async function onFotoChangeM(event) {
   try {
     // Upload direto para Cloudinary — sem Apps Script, sem CORS
     const pin = (S.cur.pin || S.cur.id || 'sem-pin').toString().trim();
+    // Comprimir antes de enviar
+    const fileComp = await comprimirImagem(file, 800, 0.75);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', fileComp);
     formData.append('upload_preset', CLOUD_PRESET);
     formData.append('public_id', pin);
     formData.append('folder', 'capelania/Membros');
@@ -1386,19 +1407,21 @@ async function salvarResumo() {
 
   let fotoUrl = '';
 
-  // Upload foto direto para Cloudinary (evita limite de URL do JSONP)
+  // Upload foto direto para Cloudinary — comprimida para reduzir tamanho
   if(S_RES.dados){
     load('Enviando foto... aguarde');
     try {
+      // Redimensionar e comprimir antes de enviar
+      const blob = await comprimirImagem(S_RES.dados, 1024, 0.7);
       const formData = new FormData();
-      formData.append('file', S_RES.dados);
+      formData.append('file', blob);
       formData.append('upload_preset', CLOUD_PRESET);
       formData.append('folder', 'capelania/Visitas');
-      formData.append('public_id', S_RES.fotoNome.replace(/\.[^.]+$/, '')); // sem extensão
 
+      console.log('Upload visita para Cloudinary...');
       const resp = await fetch(CLOUD_URL, {method:'POST', body: formData});
       const data = await resp.json();
-      console.log('Cloudinary visita:', data.secure_url || data.error);
+      console.log('Cloudinary result:', JSON.stringify(data).substr(0,200));
 
       if(data.secure_url){
         fotoUrl = data.secure_url;
