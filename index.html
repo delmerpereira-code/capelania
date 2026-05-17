@@ -627,6 +627,113 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
   </div>
 </div>
 
+<!-- RESUMO LISTA -->
+<div class="sc" id="sc-resumo">
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('home')">←</button>
+    <div class="hdr-title">Resumo de Visitas</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg">
+    <div id="res-lista"><div class="empty"><div class="ei">📊</div><p>Carregando...</p></div></div>
+  </div>
+  <button class="fab" onclick="abrirNovoResumo()">+</button>
+  <nav class="nav">
+    <button class="nb" onclick="ir('home',0,this)"><span class="ni">🏠</span>Início</button>
+    <button class="nb" onclick="ir('decisoes',1,this)"><span class="ni">✝</span>Decisões</button>
+    <button class="nb" onclick="ir('integracao',2,this)"><span class="ni">🔗</span>Integração</button>
+    <button class="nb" onclick="ir('aniversarios',3,this)"><span class="ni">🎂</span>Aniversários</button>
+  </nav>
+</div>
+
+<!-- RESUMO CARD DETALHE -->
+<div class="sc" id="sc-resumo-det">
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('resumo')">←</button>
+    <div class="hdr-title">Detalhes</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg no-nav" style="padding-bottom:40px">
+    <!-- CARD VISUAL para print/compartilhar -->
+    <div id="res-card" style="background:var(--navy);border-radius:20px;overflow:hidden;margin-bottom:16px">
+      <!-- Foto -->
+      <div id="res-card-foto" style="width:100%;height:220px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <span style="font-size:48px">📷</span>
+      </div>
+      <!-- Dados -->
+      <div style="padding:20px">
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Hospital</div>
+        <div id="rc-equipe" style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Data da Visita</div>
+            <div id="rc-data" style="font-size:18px;font-weight:700;color:#fff"></div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Líder</div>
+            <div id="rc-lider" style="font-size:14px;font-weight:600;color:#fff"></div>
+          </div>
+          <div style="background:var(--gold);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:11px;color:rgba(0,0,0,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Decisões</div>
+            <div id="rc-total" style="font-size:28px;font-weight:700;color:var(--navy)"></div>
+          </div>
+          <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Saldo</div>
+            <div id="rc-saldo" style="font-size:28px;font-weight:700;color:#fff"></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.4);text-align:center">
+          ✝ Ministério de Capelania — Nova Igreja Batista
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="compartilharResumo()" style="background:#25d366;color:#fff;margin-bottom:10px">
+      📤 Compartilhar via WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- SHEET NOVO RESUMO -->
+<div class="shov" id="sh-resumo">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px">
+      <div class="sh-title" style="padding:0">📊 Novo Resumo</div>
+      <button onclick="$('sh-resumo').classList.remove('on')" style="width:36px;height:36px;border-radius:50%;border:none;background:var(--g2);color:var(--g6);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="f">
+        <label>Equipe / Hospital *</label>
+        <div class="sel-wrap"><select id="res-eq">
+          <option value="">Selecione a equipe</option>
+        </select></div>
+      </div>
+      <div class="f">
+        <label>Data da Visita *</label>
+        <input type="text" id="res-data" placeholder="dd/mm/aaaa" maxlength="10">
+      </div>
+      <div class="f">
+        <label>Total de Decisões *</label>
+        <input type="tel" id="res-total" inputmode="numeric" placeholder="Ex: 102">
+      </div>
+      <div class="f">
+        <label>Foto da Visita</label>
+        <div style="display:flex;gap:10px">
+          <button onclick="$('res-foto-input').click()" style="flex:1;height:52px;border:1.5px dashed var(--g3);border-radius:var(--r);background:var(--g1);color:var(--g5);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
+            📷 Tirar / Escolher Foto
+          </button>
+        </div>
+        <input type="file" id="res-foto-input" accept="image/*" style="display:none" onchange="onResFotoChange(event)">
+        <div id="res-foto-preview" style="margin-top:10px;display:none">
+          <img id="res-foto-img" style="width:100%;border-radius:12px;max-height:180px;object-fit:cover">
+          <div style="font-size:12px;color:var(--g4);margin-top:6px;text-align:center" id="res-foto-status">📷 Foto selecionada</div>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="salvarResumo()">💾 Salvar Resumo</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET MUDAR SENHA -->
 <div class="shov" id="sh-senha">
   <div class="sh">
