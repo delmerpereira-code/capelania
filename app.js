@@ -1364,27 +1364,14 @@ function abrirNovoResumo() {
   S_RES = {foto:'', fotoNome:'', dados:null};
   $('res-foto-preview').style.display = 'none';
   $('res-total').value = '';
-  // Preencher data da visita do login
+  // Data da visita do login
   $('res-data').value = fD(S.dv||new Date());
-  // Preencher equipes do capelão logado
-  const sel = $('res-eq');
-  sel.innerHTML = '<option value="">Selecione a equipe</option>';
-  const equipes = (S.equipe||'').split(',').map(e=>e.trim()).filter(Boolean);
-  // Se líder tem acesso a todas as equipes
-  if(S.eqList && S.eqList.length){
-    S.eqList.forEach(eq => {
-      const o = document.createElement('option');
-      o.value = o.textContent = eq;
-      if(eq === S.equipe) o.selected = true;
-      sel.appendChild(o);
-    });
-  } else {
-    equipes.forEach(eq => {
-      const o = document.createElement('option');
-      o.value = o.textContent = eq;
-      sel.appendChild(o);
-    });
-  }
+  // Equipe fixa do login — sem seleção
+  const equipe = S.equipe || '';
+  const inp = $('res-eq');
+  const disp = $('res-eq-display');
+  if(inp) inp.value = equipe;
+  if(disp) disp.textContent = equipe || 'Nenhuma equipe selecionada';
   $('sh-resumo').classList.add('on');
 }
 
@@ -1398,16 +1385,17 @@ function onResFotoChange(event) {
   $('res-foto-status').textContent = '📷 ' + file.name;
   // Gerar nome do arquivo
   const data  = ($('res-data').value||fD(new Date())).split('/').reverse().join('-');
-  const eq    = ($('res-eq').value||'equipe').replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
+  const eqVal = ($('res-eq') ? $('res-eq').value : '') || S.equipe || 'equipe';
+  const eq    = eqVal.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
   const ext   = file.name.split('.').pop() || 'jpg';
   S_RES.fotoNome = `${data}_${eq}.${ext}`;
 }
 
 async function salvarResumo() {
-  const eq    = $('res-eq').value;
+  const eq    = ($('res-eq') ? $('res-eq').value : '') || S.equipe || '';
   const data  = $('res-data').value.trim();
   const total = $('res-total').value.trim();
-  if(!eq){ msg('Selecione a equipe.','er'); return; }
+  if(!eq){ msg('Equipe não identificada. Faça login novamente.','er'); return; }
   if(!data){ msg('Informe a data da visita.','er'); return; }
   if(!total){ msg('Informe o total de decisões.','er'); return; }
 
