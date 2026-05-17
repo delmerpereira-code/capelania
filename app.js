@@ -234,6 +234,32 @@ function startSession() {
   $('sc-home').classList.add('on');
   msg('Bem-vindo(a), '+S.user.nome.split(' ')[0]+'! 🙏','ok');
 
+  // Buscar foto do usuário logado
+  buscarFotoUsuario();
+
+  // Buscar foto do usuário logado via Apps Script
+async function buscarFotoUsuario() {
+  try {
+    const dados = await callScript({acao:'lerFotoUsuario', pin: S.user.matricula||S.user.codigo});
+    const foto = dados.foto || '';
+    if(foto && foto.indexOf('http')===0){
+      const av = $('h-av');
+      if(av){
+        const url = converterUrlFoto(foto);
+        av.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"
+          onerror="this.parentElement.innerHTML='<span style=\'font-size:18px;font-weight:700\'>${ini(S.user.nome)}</span>'">`;
+      }
+    } else {
+      // Sem foto — mostrar iniciais
+      const av = $('h-av');
+      if(av) av.innerHTML = `<span style="font-size:18px;font-weight:700">${ini(S.user.nome)}</span>`;
+    }
+  } catch(e) {
+    const av = $('h-av');
+    if(av) av.innerHTML = `<span style="font-size:18px;font-weight:700">${ini(S.user.nome)}</span>`;
+  }
+}
+
   // Gravar log de acesso — silencioso, sem bloquear o app
   try {
     const agora = new Date();
