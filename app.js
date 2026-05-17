@@ -223,7 +223,7 @@ function startSession() {
   const mods = [];
   if(S.user.perfil==='Líder'){
     mods.push({ico:'👥',lbl:'Cadastro',id:'cadastro'});
-    mods.push({ico:'📊',lbl:'Resumo',id:'home'});
+    mods.push({ico:'📊',lbl:'Resumo',id:'resumo'});
   }
   mods.push({ico:'✝',lbl:'Decisões',id:'decisoes'});
   mods.push({ico:'🔗',lbl:'Integração',id:'integracao'});
