@@ -385,28 +385,50 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
     <div class="hdr-title">Detalhes</div>
     <div style="width:40px"></div>
   </div>
-  <div class="pg no-nav" style="padding-bottom:120px">
-    <div class="dg" style="margin-bottom:14px">
-      <div class="dr"><span class="dk">📅 Data Visita</span><span class="dv" id="id-dv"></span></div>
-      <div class="dr"><span class="dk">🏥 Hospital</span><span class="dv" id="id-eq"></span></div>
-      <div class="dr"><span class="dk">👤 Capelão</span><span class="dv" id="id-cp"></span></div>
-      <div class="dr"><span class="dk">🛏️ Assistido</span><span class="dv" id="id-as"></span></div>
-      <div class="dr"><span class="dk">👤 Nome</span><span class="dv" id="id-nm"></span></div>
-      <div class="dr"><span class="dk">📞 Telefone</span><span class="dv" id="id-tel"></span></div>
-      <div class="dr"><span class="dk">✝ Integrado</span><span class="dv" id="id-integ"></span></div>
-      <div class="dr"><span class="dk">📝 OBS</span><span class="dv" id="id-obs" style="white-space:pre-line"></span></div>
+  <div class="pg no-nav" style="padding-bottom:40px">
+
+    <!-- NOME DESTAQUE -->
+    <div style="background:var(--navy);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center">
+      <div id="id-nm" style="font-family:'DM Serif Display',serif;font-size:26px;color:#fff;margin-bottom:6px"></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+        <span id="id-integ" style="font-size:15px"></span>
+        <span id="id-as" style="font-size:14px;color:rgba(255,255,255,.6)"></span>
+      </div>
+    </div>
+
+    <!-- DADOS -->
+    <div class="dg" style="margin-bottom:16px">
+      <div class="dr"><span class="dk" style="font-size:14px">📅 Data Visita</span><span class="dv" id="id-dv" style="font-size:16px;font-weight:600"></span></div>
+      <div class="dr"><span class="dk" style="font-size:14px">🏥 Hospital</span><span class="dv" id="id-eq" style="font-size:16px;font-weight:600"></span></div>
+      <div class="dr"><span class="dk" style="font-size:14px">👤 Capelão</span><span class="dv" id="id-cp" style="font-size:16px;font-weight:600"></span></div>
+      <div class="dr"><span class="dk" style="font-size:14px">📞 Telefone</span><span class="dv" id="id-tel" style="font-size:18px;font-weight:700;color:var(--blue)"></span></div>
+      <div class="dr"><span class="dk" style="font-size:14px">📝 OBS</span><span class="dv" id="id-obs" style="font-size:15px;white-space:pre-line"></span></div>
     </div>
 
     <!-- BOTÕES DE AÇÃO -->
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn" onclick="abrirWpp1()" style="background:#25d366;color:#fff;font-size:14px">
-        💬 Mensagem de Acompanhamento
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onclick="abrirWpp1()" style="width:100%;border:none;border-radius:14px;padding:18px;background:#25d366;color:#fff;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left">
+        <span style="font-size:36px;line-height:1">🙏</span>
+        <div>
+          <div style="font-size:17px;font-weight:700;font-family:'DM Sans',sans-serif">Mensagem de Acompanhamento</div>
+          <div style="font-size:13px;opacity:.85;font-family:'DM Sans',sans-serif;margin-top:2px">Saber como está + convite Um com Deus</div>
+        </div>
       </button>
-      <button class="btn" onclick="abrirWpp2()" style="background:#128c7e;color:#fff;font-size:14px">
-        ⛪ Convite Um com Deus
+
+      <button onclick="abrirWpp2()" style="width:100%;border:none;border-radius:14px;padding:18px;background:#128c7e;color:#fff;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left">
+        <span style="font-size:36px;line-height:1">⛪</span>
+        <div>
+          <div style="font-size:17px;font-weight:700;font-family:'DM Sans',sans-serif">Convite Um com Deus</div>
+          <div style="font-size:13px;opacity:.85;font-family:'DM Sans',sans-serif;margin-top:2px">Endereço, horários e YouTube</div>
+        </div>
       </button>
-      <button class="btn btn-p" id="btn-integ-reg" onclick="registrarIntegracao()" style="font-size:14px">
-        ✅ Registrar Integração
+
+      <button id="btn-integ-reg" onclick="registrarIntegracao()" style="width:100%;border:none;border-radius:14px;padding:18px;background:var(--navy);color:#fff;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left">
+        <span style="font-size:36px;line-height:1">✅</span>
+        <div>
+          <div style="font-size:17px;font-weight:700;font-family:'DM Sans',sans-serif">Registrar Integração</div>
+          <div style="font-size:13px;opacity:.85;font-family:'DM Sans',sans-serif;margin-top:2px">Marcar como integrado no sistema</div>
+        </div>
       </button>
     </div>
   </div>
