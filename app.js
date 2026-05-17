@@ -615,22 +615,48 @@ function setTab(idx, btn){
 }
 
 function showEdit(pane, on){
-  $('v'+pane).style.display = on?'none':'block';
-  $('e'+pane).style.display = on?'block':'none';
-  if(on && pane===0){
-    const m=S.cur;
-    $('ep').value=m.pin||''; $('enc').value=m.nomeComp||''; $('ens').value=m.nomeSoc||'';
-    setOpt('esx',m.sexo);
-    $('etel').value=m.tel||''; $('erg').value=m.rg||''; $('eem').value=m.email||'';
-    $('ean').value=m.aniversario||'';
+  const vEl = $('v'+pane), eEl = $('e'+pane);
+  if(vEl) vEl.style.display = on ? 'none' : 'block';
+  if(eEl) eEl.style.display = on ? 'block' : 'none';
+  if(!on || !S.cur) return;
+  const m = S.cur;
+  if(pane===0){
+    if($('ep'))   $('ep').value   = m.pin||'';
+    if($('enc'))  $('enc').value  = m.nomeComp||'';
+    if($('ens'))  $('ens').value  = m.nomeSoc||'';
+    if($('etel')) $('etel').value = m.tel||'';
+    if($('erg'))  $('erg').value  = m.rg||'';
+    if($('eem'))  $('eem').value  = m.email||'';
+    if($('ean'))  $('ean').value  = m.aniversario||'';
+    // Sexo — setar valor direto
+    const esx = $('esx');
+    if(esx) {
+      const sx = (m.sexo||'').toString().trim();
+      // Tentar setar direto primeiro
+      esx.value = sx;
+      // Se não encontrou, tentar variações
+      if(!esx.value || esx.value !== sx) {
+        for(const opt of esx.options) {
+          if(opt.value===sx || opt.text===sx ||
+             opt.value.toUpperCase()===sx.toUpperCase()) {
+            esx.value = opt.value; break;
+          }
+        }
+      }
+    }
   }
-  if(on && pane===1){
-    const m=S.cur;
-    setOpt('edc',m.declaMinist); $('elg').value=m.liderGA||'';
-    setOpt('eucd',m.umComDeus); setOpt('ebat',m.batizado);
-    setOpt('egrp',m.grupo); setOpt('eclt',m.culto); setOpt('esnb',m.senib);
-    setOpt('efi',m.fazInteg); setOpt('esit',m.sit||'Ativo'); setOpt('epf',m.perfil||'Membro');
-    $('eobs').value=m.obs||'';
+  if(pane===1){
+    if($('elg'))  $('elg').value  = m.liderGA||'';
+    if($('eobs')) $('eobs').value = m.obs||'';
+    setOpt('edc',  m.declaMinist);
+    setOpt('eucd', m.umComDeus);
+    setOpt('ebat', m.batizado);
+    setOpt('egrp', m.grupo);
+    setOpt('eclt', m.culto);
+    setOpt('esnb', m.senib);
+    setOpt('efi',  m.fazInteg);
+    setOpt('esit', m.sit||'Ativo');
+    setOpt('epf',  m.perfil||'Membro');
   }
 }
 
