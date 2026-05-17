@@ -229,12 +229,12 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 <div class="sc on" id="sc-login">
   <div class="brand">
     <div class="cross"></div>
-    <h1>Capelania</h1>
+    <h1>Capelania Nib</h1>
     <p>Ministério de Capelania</p>
   </div>
   <div class="login-box">
     <div class="lerr" id="lerr"></div>
-    <div class="lf"><label>Usuário</label><input type="text" id="lu" placeholder="Ex: Delmer" autocomplete="off"></div>
+    <div class="lf"><label>Usuário</label><input type="text" id="lu" placeholder="Ex: Jesus" autocomplete="off"></div>
     <div class="lf"><label>Senha (PIN)</label><input type="password" id="lp" inputmode="numeric" placeholder="••••••"></div>
     <div class="lf" id="leqc" style="display:none">
       <label>Equipe</label>
@@ -247,7 +247,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 <!-- HOME -->
 <div class="sc" id="sc-home">
   <div class="hdr">
-    <div class="hdr-title">✝ Capelania</div>
+    <div class="hdr-title">✝ Capelania Nova Igreja Batista</div>
     <button class="hdr-btn" onclick="doSair()">Sair</button>
   </div>
   <div class="pg">
@@ -318,14 +318,14 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
         <div class="strip-row"><span class="strip-k">🏥 Equipe</span><span class="strip-v" id="d-eq"></span></div>
       </div>
       <div class="f"><label>Assistido *</label>
-        <div class="tg"><button class="tb on" onclick="tog('assistido','Paciente',this)">Paciente</button><button class="tb" onclick="tog('assistido','Visitante',this)">Visitante</button></div>
+        <div class="tg"><button class="tb" onclick="tog('assistido','Paciente',this)">Paciente</button><button class="tb" onclick="tog('assistido','Visitante',this)">Visitante</button></div>
       </div>
       <div class="f"><label>Sexo *</label>
-        <div class="tg"><button class="tb" onclick="tog('sexo','Feminino',this)">Feminino</button><button class="tb on" onclick="tog('sexo','Masculino',this)">Masculino</button></div>
+        <div class="tg"><button class="tb" onclick="tog('sexo','Feminino',this)">Feminino</button><button class="tb" onclick="tog('sexo','Masculino',this)">Masculino</button></div>
       </div>
       <div class="f"><label>Nome do Assistido *</label><input type="text" id="d-nm" placeholder="Nome completo" autocomplete="off"></div>
       <div class="f"><label>Realizar Integração? *</label>
-        <div class="tg"><button class="tb" id="d-sim" onclick="setInteg(true)">SIM</button><button class="tb on" id="d-nao" onclick="setInteg(false)">NÃO</button></div>
+        <div class="tg"><button class="tb" id="d-sim" onclick="setInteg(true)">SIM</button><button class="tb" id="d-nao" onclick="setInteg(false)">NÃO</button></div>
       </div>
       <div id="blk-sim" style="display:none">
         <div class="f"><label>Telefone *</label><input type="tel" id="d-tel" inputmode="numeric" placeholder="92981286628"></div>
