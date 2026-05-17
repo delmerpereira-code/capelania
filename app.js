@@ -1388,7 +1388,7 @@ async function salvarResumo() {
 
   // Upload foto para o Drive se selecionada
   if(S_RES.dados){
-    load('Enviando foto...');
+    load('Enviando foto... aguarde');
     try {
       const reader = new FileReader();
       const base64 = await new Promise((ok,er) => {
@@ -1396,15 +1396,28 @@ async function salvarResumo() {
         reader.onerror = er;
         reader.readAsDataURL(S_RES.dados);
       });
+      console.log('Upload foto:', S_RES.fotoNome, 'tipo:', S_RES.dados.type, 'base64 len:', base64.length);
       const res = await callScript({
         acao:  'uploadFotoVisita',
         nome:  S_RES.fotoNome,
         tipo:  S_RES.dados.type || 'image/jpeg',
         dados: base64
       });
-      if(res.url) fotoUrl = res.url;
-      else if(res.erro) msg('Foto não salva: '+res.erro,'er');
-    } catch(e) { msg('Erro no upload da foto.','er'); }
+      console.log('Upload result:', JSON.stringify(res));
+      if(res && res.url){
+        fotoUrl = res.url;
+        msg('📷 Foto enviada!', 'ok');
+      } else {
+        unload();
+        msg('Erro foto: ' + (res && res.erro ? res.erro : 'sem resposta'), 'er');
+        // Perguntar se quer continuar sem foto
+        if(!confirm('Erro ao salvar foto. Continuar sem a foto?')) return;
+      }
+    } catch(e) {
+      unload();
+      console.error('Upload erro:', e);
+      if(!confirm('Erro ao enviar foto: '+e.message+'. Continuar sem a foto?')) return;
+    }
   }
 
   load('Salvando resumo...');
