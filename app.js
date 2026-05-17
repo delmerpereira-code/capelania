@@ -558,47 +558,51 @@ function openMembro(linha){
   ir('membro');
 }
 
+function setText(id, val) {
+  const el = $(id); if(el) el.textContent = val||'-';
+}
+
 function fillView(m){
   const ns = m.nomeSoc||m.nomeComp;
-  $('m-name').textContent = ns;
-  $('m-id').textContent = m.id;
+  setText('m-name', ns);
+  setText('m-id', m.id);
 
   // Avatar com foto
   const av = $('m-av');
-  if(m.foto && m.foto.indexOf('http')===0){
-    const fotoUrl = converterUrlFoto(m.foto);
-    av.innerHTML=`<img src="${fotoUrl}" style="width:100%;height:100%;object-fit:cover"
-      onerror="this.style.display='none';this.parentElement.textContent='${ini(ns)}'">`;
-  } else {
-    av.textContent = ini(ns);
+  if(av){
+    if(m.foto && m.foto.indexOf('http')===0){
+      const fotoUrl = converterUrlFoto(m.foto);
+      av.innerHTML=`<img src="${fotoUrl}" style="width:100%;height:100%;object-fit:cover"
+        onerror="this.style.display='none';this.parentElement.textContent='${ini(ns)}'">`;
+    } else {
+      av.textContent = ini(ns);
+    }
   }
   // Botão câmera — só para Líder
   const camBtn = $('btn-cam-m');
   if(camBtn) camBtn.style.display = S.user?.perfil==='Líder' ? 'flex' : 'none';
 
-  // Badge
+  // Badge situação
   const bd = $('m-badge');
-  bd.textContent = m.sit||'Ativo';
-  bd.className = 'badge '+(m.sit==='Ativo'?'bg-g':'bg-r');
+  if(bd){ bd.textContent=m.sit||'Ativo'; bd.className='badge '+(m.sit==='Ativo'?'bg-g':'bg-r'); }
 
   // Btn situação
   const bs = $('btn-sit');
-  bs.textContent = m.sit==='Ativo'?'⛔ Desativar':'✅ Ativar membro';
-  bs.className = 'btn '+(m.sit==='Ativo'?'btn-r':'btn-g');
+  if(bs){ bs.textContent=m.sit==='Ativo'?'⛔ Desativar':'✅ Ativar membro'; bs.className='btn '+(m.sit==='Ativo'?'btn-r':'btn-g'); }
 
   // Dados pessoais
-  $('v-pin').textContent=m.pin||'-';   $('v-nc').textContent=m.nomeComp||'-';
-  $('v-us').textContent=m.usuario||'-'; $('v-sx').textContent=m.sexo||'-';
-  $('v-tel').textContent=m.tel||'-';    $('v-rg').textContent=m.rg||'-';
-  $('v-em').textContent=m.email||'-';   $('v-an').textContent=m.aniversario||'-';
+  setText('v-pin', m.pin);   setText('v-nc', m.nomeComp);
+  setText('v-us', m.usuario); setText('v-sx', m.sexo);
+  setText('v-tel', m.tel);    setText('v-rg', m.rg);
+  setText('v-em', m.email);   setText('v-an', m.aniversario);
 
   // Ministerial
-  $('vm-dc').textContent=m.declaMinist||'-'; $('vm-lg').textContent=m.liderGA||'-';
-  $('vm-ucd').textContent=m.umComDeus||'-';  $('vm-bat').textContent=m.batizado||'-';
-  $('vm-grp').textContent=m.grupo||'-';      $('vm-clt').textContent=m.culto||'-';
-  $('vm-snb').textContent=m.senib||'-';      $('vm-fi').textContent=m.fazInteg||'-';
-  $('vm-sit').textContent=m.sit||'-';        $('vm-pf').textContent=m.perfil||'-';
-  $('vm-obs').textContent=m.obs||'-';
+  setText('vm-dc', m.declaMinist); setText('vm-lg', m.liderGA);
+  setText('vm-ucd', m.umComDeus);  setText('vm-bat', m.batizado);
+  setText('vm-grp', m.grupo);      setText('vm-clt', m.culto);
+  setText('vm-snb', m.senib);      setText('vm-fi', m.fazInteg);
+  setText('vm-sit', m.sit);        setText('vm-pf', m.perfil);
+  setText('vm-obs', m.obs);
 
   // Equipes
   renderEqList(m.equipes||'');
