@@ -483,7 +483,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
       <div class="foto-cam" id="btn-cam-m" onclick="abrirCameraM()" style="display:none">📷</div>
       <div class="foto-loading" id="foto-prog"><span>Salvando...</span></div>
     </div>
-    <input type="file" id="foto-input-m" accept="image/*" capture="environment" style="display:none" onchange="onFotoChangeM(event)">
+    <input type="file" id="foto-input-m" accept="image/*" style="display:none" onchange="onFotoChangeM(event)">
     <div class="hero-name" id="m-name"></div>
     <div class="hero-id" id="m-id"></div>
     <div style="margin-top:10px"><span class="badge" id="m-badge"></span></div>
@@ -718,7 +718,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
       </div>
       <div class="f">
         <label>Foto da Visita</label>
-        <input type="file" id="res-foto-input" accept="image/*" capture="environment" style="display:none" onchange="onResFotoChange(event)">
+        <input type="file" id="res-foto-input" accept="image/*" style="display:none" onchange="onResFotoChange(event)">
         <label for="res-foto-input" style="display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border:1.5px dashed var(--g3);border-radius:var(--r);background:var(--g1);color:var(--g5);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;width:100%">
           📷 Tirar / Escolher Foto
         </label>
