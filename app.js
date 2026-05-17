@@ -164,6 +164,7 @@ function ir(name, navIdx, btn) {
   if(name==='decisoes') loadDecSemana();
   if(name==='integracao') loadIntegracao();
   if(name==='resumo') loadResumo();
+  if(name==='aniversarios') loadAniv();
   if(name==='cadastro' && !S.cad.length) loadCad();
 }
 
@@ -1485,4 +1486,117 @@ async function salvarResumo() {
     msg(`✅ Resumo salvo! Lançadas: ${res.lancadas} · Saldo: ${res.saldo}`,'ok');
     loadResumo();
   } catch(e){ unload(); msg('Erro ao salvar: '+e.message,'er'); }
+}
+
+// ═══════════════════════════════════════
+// ANIVERSARIANTES
+// ═══════════════════════════════════════
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function loadAniv() {
+  // Dados já estão em S.cadAll — só renderizar
+  renderAniv();
+}
+
+function renderAniv() {
+  const ls = $('aniv-lista');
+  const busca = ($('aniv-search')?$('aniv-search').value:'').toLowerCase().trim();
+
+  // Filtrar ativos com aniversário preenchido
+  let lista = (S.cadAll||[]).filter(m => {
+    if((m.sit||'Ativo') !== 'Ativo') return false;
+    if(!m.aniversario || m.aniversario === '-') return false;
+    if(busca && (m.nomeSoc||m.nomeComp||'').toLowerCase().indexOf(busca) < 0) return false;
+    return true;
+  });
+
+  if(!lista.length){
+    ls.innerHTML = '<div class="empty"><div class="ei">🎂</div><p>Nenhum aniversariante encontrado.</p></div>';
+    return;
+  }
+
+  // Parsear data de aniversário — formato dd/mm
+  function parseDia(aniv) {
+    const p = (aniv||'').split('/');
+    if(p.length < 2) return {dia:0, mes:0};
+    return {dia: parseInt(p[0]||0), mes: parseInt(p[1]||0)};
+  }
+
+  // Agrupar por mês
+  const grupos = {};
+  lista.forEach(m => {
+    const {dia, mes} = parseDia(m.aniversario);
+    if(!mes || mes < 1 || mes > 12) return;
+    if(!grupos[mes]) grupos[mes] = [];
+    grupos[mes].push({...m, diaN: dia, mesN: mes});
+  });
+
+  // Ordenar dentro de cada mês por dia
+  Object.keys(grupos).forEach(mes => {
+    grupos[mes].sort((a,b) => a.diaN - b.diaN);
+  });
+
+  // Ordem dos meses — começar pelo mês atual, ciclo completo
+  const mesAtual = new Date().getMonth() + 1; // 1-12
+  const ordemMeses = [];
+  for(let i = 0; i < 12; i++){
+    const m = ((mesAtual - 1 + i) % 12) + 1;
+    if(grupos[m]) ordemMeses.push(m);
+  }
+
+  if(!ordemMeses.length){
+    ls.innerHTML = '<div class="empty"><div class="ei">🎂</div><p>Nenhum aniversariante cadastrado.</p></div>';
+    return;
+  }
+
+  // Dia de hoje para destacar aniversariantes do dia
+  const hoje = new Date();
+  const diaHoje = hoje.getDate(), mesHoje = hoje.getMonth()+1;
+
+  ls.innerHTML = ordemMeses.map(mes => {
+    const isAtual = mes === mesAtual;
+    const membros = grupos[mes];
+    return `
+      <div class="eq-hdr" style="${isAtual?'background:var(--navy);color:#fff;border-radius:10px;':''}">
+        <span>${isAtual?'🎂 ':''}${MESES[mes-1]}${isAtual?' (este mês)':''}</span>
+        <span class="eq-cnt" style="${isAtual?'background:rgba(255,255,255,.2);':''}">${membros.length}</span>
+      </div>
+      ${membros.map(m => {
+        const temFoto = m.foto && m.foto.indexOf('http')===0;
+        const tel = (m.tel||'').replace(/\D/g,'');
+        const temTel = tel.length >= 10;
+        const isHoje = m.diaN === diaHoje && m.mesN === mesHoje;
+        const nome = m.nomeSoc || m.nomeComp || '-';
+        const wppMsg = encodeURIComponent(
+          `🎂 Feliz Aniversário, ${nome.split(' ')[0]}!\n\n` +
+          `Que Deus te abençoe grandemente neste dia especial! ` +
+          `Que sua vida seja repleta de alegria, saúde e bênçãos.\n\n` +
+          `Com carinho, família da Capelania 🙏✝️`
+        );
+        return `
+          <div style="background:${isHoje?'#fffbeb':'#fff'};border:${isHoje?'2px solid var(--gold)':'1.5px solid var(--g2)'};border-radius:12px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
+            <!-- Foto -->
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--g2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy)">
+              ${temFoto ? `<img src="${converterUrlFoto(m.foto)}" style="width:100%;height:100%;object-fit:cover">` : ini(nome)}
+            </div>
+            <!-- Dados -->
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                ${isHoje?'🎉 ':''}${nome}
+              </div>
+              <div style="font-size:13px;color:var(--g5);margin-top:2px">
+                🎂 ${String(m.diaN).padStart(2,'0')}/${String(m.mesN).padStart(2,'0')}
+                ${isHoje?'<span style="color:var(--gold);font-weight:700"> · Hoje!</span>':''}
+              </div>
+            </div>
+            <!-- Botão WhatsApp -->
+            ${temTel ? `
+            <a href="https://api.whatsapp.com/send?phone=55${tel}&text=${wppMsg}" target="_blank"
+              style="width:42px;height:42px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-size:20px">
+              💬
+            </a>` : `<div style="width:42px;height:42px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📵</div>`}
+          </div>`;
+      }).join('')}`;
+  }).join('');
 }
