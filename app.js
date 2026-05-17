@@ -1122,8 +1122,8 @@ function renderIntegLista() {
           <span class="acc-cnt">${grupos[cp].length}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          ${naoCnt>0?`<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">🤍 ${naoCnt}</span>`:''}
-          ${simCnt>0?`<span style="background:#dcfce7;color:#15803d;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">❤️ ${simCnt}</span>`:''}
+          ${naoCnt>0?`<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">❤️ ${naoCnt}</span>`:''}
+          ${simCnt>0?`<span style="background:#dcfce7;color:#15803d;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">💚 ${simCnt}</span>`:''}
           <span class="acc-arr">▾</span>
         </div>
       </div>
@@ -1136,7 +1136,7 @@ function renderIntegLista() {
               <div style="font-size:13px;color:var(--g5);margin-top:3px">${d.assistido} · ${d.hospital}</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
-              <span style="font-size:22px">${ok?'❤️':'🤍'}</span>
+              <span style="font-size:22px">${ok?'💚':'❤️'}</span>
               <span style="font-size:11px;font-weight:700;color:${ok?'#15803d':'#991b1b'}">${ok?'SIM':'NÃO'}</span>
             </div>
           </div>`;
@@ -1225,7 +1225,7 @@ function abrirDetInteg(id) {
   const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
   const integEl = $('id-integ');
   integEl.innerHTML = ok
-    ? '<span class="badge bg-g" style="font-size:15px;padding:6px 14px">❤️ SIM — Integrado</span>'
+    ? '<span class="badge bg-g" style="font-size:15px;padding:6px 14px">💚 SIM — Integrado</span>'
     : '<span class="badge bg-r" style="font-size:15px;padding:6px 14px">❤️ NÃO — Pendente</span>';
 
   // Botão registrar — desabilitar se já integrado
