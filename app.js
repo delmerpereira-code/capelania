@@ -345,6 +345,13 @@ async function salvarDec() {
   const integ=S.dec.integ, det=$('d-obs').value.trim(), mot=$('d-mot').value;
   if(!nm){ msg('Informe o nome do assistido.','er'); return; }
   if(integ&&!tel){ msg('Informe o telefone.','er'); return; }
+  // Validar telefone — mínimo 10 dígitos, não pode ser só 92
+  if(integ && tel){
+    var telNum = tel.replace(/\D/g,'');
+    if(telNum.length < 10 || telNum === '92' || telNum === '55'){
+      msg('Telefone inválido — informe o número completo com DDD.','er'); return;
+    }
+  }
   if(integ&&!det){ msg('Informe as observações.','er'); return; }
   if(!integ&&!mot){ msg('Selecione o motivo.','er'); return; }
   const h=new Date(), hS=fD(h);
@@ -972,8 +979,17 @@ function abrirDetInteg(id) {
   $('id-eq').textContent  = d.hospital || d.equipe || '-';
   $('id-cp').textContent  = d.capelao  || '-';
   $('id-as').textContent  = d.assistido? '🛏️ '+d.assistido : '-';
-  $('id-tel').textContent = d.tel      || '-';
+  const telNum = (d.tel||'').replace(/\D/g,'');
+  const telValido = telNum.length >= 10 && telNum !== '92' && telNum !== '55';
+  $('id-tel').textContent = d.tel || '⚠️ Sem telefone válido';
+  $('id-tel').style.color = telValido ? 'var(--blue)' : 'var(--red)';
   $('id-obs').textContent = d.obs      || '-';
+
+  // Desabilitar WhatsApp se não tem telefone válido
+  const btn1 = document.querySelector('[onclick="abrirWpp1()"]');
+  const btn2 = document.querySelector('[onclick="abrirWpp2()"]');
+  if(btn1){ btn1.style.opacity = telValido?'1':'0.4'; btn1.style.pointerEvents = telValido?'auto':'none'; }
+  if(btn2){ btn2.style.opacity = telValido?'1':'0.4'; btn2.style.pointerEvents = telValido?'auto':'none'; }
 
   const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
   const integEl = $('id-integ');
@@ -1034,6 +1050,13 @@ function abrirWpp2() {
 
 async function registrarIntegracao() {
   const d = S._curInteg; if(!d) return;
+  // Validar telefone antes de registrar
+  const telNum = (d.tel||'').replace(/\D/g,'');
+  const telValido = telNum.length >= 10 && telNum !== '92' && telNum !== '55';
+  if(!telValido){
+    msg('Não é possível registrar integração sem telefone válido.','er');
+    return;
+  }
   const btn = $('btn-integ-reg');
   btn.disabled = true; btn.textContent = 'Registrando...';
   load('Registrando integração...');
