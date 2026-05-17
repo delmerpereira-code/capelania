@@ -718,12 +718,10 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
       </div>
       <div class="f">
         <label>Foto da Visita</label>
-        <div style="display:flex;gap:10px">
-          <button onclick="$('res-foto-input').click()" style="flex:1;height:52px;border:1.5px dashed var(--g3);border-radius:var(--r);background:var(--g1);color:var(--g5);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">
-            📷 Tirar / Escolher Foto
-          </button>
-        </div>
-        <input type="file" id="res-foto-input" accept="image/*" style="display:none" onchange="onResFotoChange(event)">
+        <input type="file" id="res-foto-input" accept="image/*" capture="environment" style="display:none" onchange="onResFotoChange(event)">
+        <label for="res-foto-input" style="display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border:1.5px dashed var(--g3);border-radius:var(--r);background:var(--g1);color:var(--g5);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;width:100%">
+          📷 Tirar / Escolher Foto
+        </label>
         <div id="res-foto-preview" style="margin-top:10px;display:none">
           <img id="res-foto-img" style="width:100%;border-radius:12px;max-height:180px;object-fit:cover">
           <div style="font-size:12px;color:var(--g4);margin-top:6px;text-align:center" id="res-foto-status">📷 Foto selecionada</div>
