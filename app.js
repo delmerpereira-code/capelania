@@ -78,6 +78,16 @@ function calcDv(eq) {
   const dv = new Date(h); dv.setDate(h.getDate()+(alvo-h.getDay()));
   return dv;
 }
+// Calcula semana igual ao Google Sheets NÚMSEMANA(data;2) — semana começa na segunda
+function numSemana(d) {
+  const data = d || new Date();
+  const anoIni = new Date(data.getFullYear(), 0, 1);
+  // Ajustar para segunda como primeiro dia (modo 2 do Sheets)
+  const diaSemAnoIni = anoIni.getDay() || 7; // 1=seg...7=dom
+  const diasPassados = Math.floor((data - anoIni) / 86400000);
+  return Math.ceil((diasPassados + diaSemAnoIni) / 7);
+}
+
 function naSemanAtual(str) {
   const p = str.split('/'); if(p.length<3) return false;
   const d = new Date(p[2],p[1]-1,p[0]);
@@ -176,7 +186,7 @@ async function doLogin() {
   const nome = found.nomeSoc||found.usuario;
   const perfil = normPerfil(found.perfil);
   const equipes = (found.equipes||'').split(',').map(e=>e.trim()).filter(Boolean);
-  S.user = {codigo:found.id||u, nome, perfil};
+  S.user = {codigo:found.id||u, matricula:found.pin||u, nome, perfil};
 
   if(!equipes.length){ errEl.textContent='Sem equipe cadastrada.'; errEl.style.display='block'; return; }
 
@@ -223,6 +233,24 @@ function startSession() {
   document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
   $('sc-home').classList.add('on');
   msg('Bem-vindo(a), '+S.user.nome.split(' ')[0]+'! 🙏','ok');
+
+  // Gravar log de acesso — silencioso, sem bloquear o app
+  try {
+    const agora = new Date();
+    const dataHora = fD(agora) + ' ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    callScript({
+      acao: 'gravar',
+      aba:  'Log',
+      dados: encodeURIComponent(JSON.stringify([
+        dataHora,
+        S.user.codigo,
+        S.user.nome,
+        S.equipe,
+        S.user.perfil,
+        navigator.userAgent.indexOf('Mobile')>=0 ? 'Celular' : 'Computador'
+      ]))
+    });
+  } catch(e) { console.log('Log acesso:', e); }
 }
 
 function doSair() {
@@ -322,9 +350,8 @@ async function salvarDec() {
   const h=new Date(), hS=fD(h);
   if(!naSemanAtual(hS)){ msg('Fora da semana atual.','er'); return; }
   const dvS = fD(S.dv||h);
-  const anoI = new Date(h.getFullYear(),0,1);
-  const sem = Math.ceil(((h-anoI)/86400000+anoI.getDay()+1)/7);
-  const vals = [gId(),hS,S.user.codigo,S.user.nome,S.equipe,dvS,
+  const sem = numSemana(h); // igual ao NÚMSEMANA(data;2) do Sheets
+  const vals = [gId(),hS,S.user.matricula||S.user.codigo,S.user.nome,S.equipe,dvS,
     S.dec.assistido,nm,S.dec.sexo==='Masculino'?'M':'F',
     tel,integ?'S':'N',integ?'':mot,integ?det:'',sem,''];
   load('Salvando...');
