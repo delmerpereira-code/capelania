@@ -142,7 +142,8 @@ async function atualizar(aba, linha, vals) {
 // ═══════════════════════════════════════
 function ir(name, navIdx, btn) {
   document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
-  const scId = name === 'integ-det' ? 'sc-integ-det' : 'sc-'+name;
+  const scMap = {'integ-det':'sc-integ-det','resumo-det':'sc-resumo-det'};
+  const scId = scMap[name] || 'sc-'+name;
   const sc = $(scId); if(sc) sc.classList.add('on');
   if(btn) {
     const nav = btn.closest('nav');
@@ -151,6 +152,7 @@ function ir(name, navIdx, btn) {
   }
   if(name==='decisoes') loadDecSemana();
   if(name==='integracao') loadIntegracao();
+  if(name==='resumo') loadResumo();
   if(name==='cadastro' && !S.cad.length) loadCad();
 }
 
@@ -1248,4 +1250,177 @@ async function registrarIntegracao() {
     btn.textContent = '✅ Registrar Integração';
     msg('Erro ao registrar: ' + e.message, 'er');
   }
+}
+
+// ═══════════════════════════════════════
+// MÓDULO RESUMO
+// ═══════════════════════════════════════
+var S_RES = { foto: '', fotoNome: '', dados: null };
+
+async function loadResumo() {
+  const ls = $('res-lista');
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
+  try {
+    const dados = await callScript({acao:'lerResumos'});
+    const lista = dados.values || [];
+    if(!lista.length){
+      ls.innerHTML = '<div class="empty"><div class="ei">📊</div><p>Nenhum resumo ainda.<br>Toque + para criar.</p></div>';
+      return;
+    }
+    // Agrupar por data
+    const grupos = {}, ordem = [];
+    lista.forEach(r => {
+      if(!grupos[r.data]){ grupos[r.data]=[]; ordem.push(r.data); }
+      grupos[r.data].push(r);
+    });
+    ls.innerHTML = ordem.map(data => `
+      <div class="eq-hdr"><span>📅 ${data}</span>
+        <span class="eq-cnt">${grupos[data].reduce((s,r)=>s+r.total,0)}</span>
+      </div>
+      ${grupos[data].map(r => {
+        const temFoto = r.foto && r.foto.indexOf('http')===0;
+        return `<div class="mrow" onclick="abrirDetResumo('${r.id}')" style="gap:12px;padding:14px">
+          <div style="width:56px;height:56px;border-radius:10px;background:var(--g2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+            ${temFoto ? `<img src="${converterUrlFoto(r.foto)}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:24px">📷</span>'}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="mname" style="font-size:15px">${r.equipe}</div>
+            <div class="member-sub" style="margin-top:4px;font-size:12px">
+              ✝ ${r.total} decisões · 📋 ${r.lancadas} lançadas · Saldo: ${r.saldo}
+            </div>
+          </div>
+          <span style="color:var(--g3);font-size:20px">›</span>
+        </div>`;
+      }).join('')}`).join('');
+    S._resumos = lista;
+  } catch(e) {
+    ls.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`;
+  }
+}
+
+function abrirDetResumo(id) {
+  const r = (S._resumos||[]).find(x=>x.id===id);
+  if(!r) return;
+  S._curResumo = r;
+  // Preencher card
+  $('rc-equipe').textContent = r.equipe;
+  $('rc-data').textContent   = r.data;
+  $('rc-lider').textContent  = r.lider;
+  $('rc-total').textContent  = r.total;
+  $('rc-saldo').textContent  = r.saldo;
+  // Foto
+  const fotoDiv = $('res-card-foto');
+  if(r.foto && r.foto.indexOf('http')===0){
+    fotoDiv.innerHTML = `<img src="${converterUrlFoto(r.foto)}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    fotoDiv.innerHTML = '<span style="font-size:48px">📷</span>';
+  }
+  ir('resumo-det');
+}
+
+function compartilharResumo() {
+  const r = S._curResumo; if(!r) return;
+  const texto = encodeURIComponent(
+    `✝ *RELATÓRIO DE VISITA*\n\n` +
+    `🏥 *${r.equipe}*\n` +
+    `📅 Data: ${r.data}\n` +
+    `👤 Líder: ${r.lider}\n\n` +
+    `✝ *Decisões:* ${r.total}\n` +
+    `📋 *Lançadas:* ${r.lancadas}\n` +
+    `📊 *Saldo:* ${r.saldo}\n\n` +
+    `_Ministério de Capelania — Nova Igreja Batista_`
+  );
+  window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+}
+
+function abrirNovoResumo() {
+  S_RES = {foto:'', fotoNome:'', dados:null};
+  $('res-foto-preview').style.display = 'none';
+  $('res-total').value = '';
+  // Preencher data da visita do login
+  $('res-data').value = fD(S.dv||new Date());
+  // Preencher equipes do capelão logado
+  const sel = $('res-eq');
+  sel.innerHTML = '<option value="">Selecione a equipe</option>';
+  const equipes = (S.equipe||'').split(',').map(e=>e.trim()).filter(Boolean);
+  // Se líder tem acesso a todas as equipes
+  if(S.eqList && S.eqList.length){
+    S.eqList.forEach(eq => {
+      const o = document.createElement('option');
+      o.value = o.textContent = eq;
+      if(eq === S.equipe) o.selected = true;
+      sel.appendChild(o);
+    });
+  } else {
+    equipes.forEach(eq => {
+      const o = document.createElement('option');
+      o.value = o.textContent = eq;
+      sel.appendChild(o);
+    });
+  }
+  $('sh-resumo').classList.add('on');
+}
+
+function onResFotoChange(event) {
+  const file = event.target.files[0]; if(!file) return;
+  S_RES.dados = file;
+  // Preview
+  const url = URL.createObjectURL(file);
+  $('res-foto-img').src = url;
+  $('res-foto-preview').style.display = 'block';
+  $('res-foto-status').textContent = '📷 ' + file.name;
+  // Gerar nome do arquivo
+  const data  = ($('res-data').value||fD(new Date())).split('/').reverse().join('-');
+  const eq    = ($('res-eq').value||'equipe').replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
+  const ext   = file.name.split('.').pop() || 'jpg';
+  S_RES.fotoNome = `${data}_${eq}.${ext}`;
+}
+
+async function salvarResumo() {
+  const eq    = $('res-eq').value;
+  const data  = $('res-data').value.trim();
+  const total = $('res-total').value.trim();
+  if(!eq){ msg('Selecione a equipe.','er'); return; }
+  if(!data){ msg('Informe a data da visita.','er'); return; }
+  if(!total){ msg('Informe o total de decisões.','er'); return; }
+
+  let fotoUrl = '';
+
+  // Upload foto para o Drive se selecionada
+  if(S_RES.dados){
+    load('Enviando foto...');
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise((ok,er) => {
+        reader.onload = e => ok(e.target.result.split(',')[1]);
+        reader.onerror = er;
+        reader.readAsDataURL(S_RES.dados);
+      });
+      const res = await callScript({
+        acao:  'uploadFotoVisita',
+        nome:  S_RES.fotoNome,
+        tipo:  S_RES.dados.type || 'image/jpeg',
+        dados: base64
+      });
+      if(res.url) fotoUrl = res.url;
+      else if(res.erro) msg('Foto não salva: '+res.erro,'er');
+    } catch(e) { msg('Erro no upload da foto.','er'); }
+  }
+
+  load('Salvando resumo...');
+  try {
+    const res = await callScript({
+      acao:       'gravarResumo',
+      equipe:     eq,
+      dataVisita: data,
+      lider:      S.user.nome,
+      total:      parseInt(total),
+      foto:       fotoUrl
+    });
+    unload();
+    if(res.erro){ msg(res.erro,'er'); return; }
+    $('sh-resumo').classList.remove('on');
+    msg(`✅ Resumo salvo! Lançadas: ${res.lancadas} · Saldo: ${res.saldo}`,'ok');
+    loadResumo();
+  } catch(e){ unload(); msg('Erro ao salvar: '+e.message,'er'); }
 }
