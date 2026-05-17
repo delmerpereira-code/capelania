@@ -170,23 +170,24 @@ async function doLogin() {
     unload();
   }
 
-  const uL = u.toLowerCase().trim();
+  const uTrim = u.trim(); // matrícula digitada
   let found = null;
   for(const r of S.loginData){
-    const uOk = r.usuario.toLowerCase()===uL || r.nomeSoc.toLowerCase()===uL || r.nomeSoc.toLowerCase().split(' ')[0]===uL;
-    if(uOk && String(r.pin)===p){ found=r; break; }
+    // Login = matrícula (col C), Senha = col F
+    if(String(r.pin) === uTrim && String(r.senha) === p){ found=r; break; }
   }
 
   if(!found){
-    const existe = S.loginData.some(r => r.usuario.toLowerCase()===uL||r.nomeSoc.toLowerCase()===uL||r.nomeSoc.toLowerCase().split(' ')[0]===uL);
-    errEl.textContent = existe ? 'PIN incorreto.' : 'Usuário não encontrado.';
+    // Verificar se a matrícula existe (mas senha errada)
+    const existe = S.loginData.some(r => String(r.pin) === uTrim);
+    errEl.textContent = existe ? 'Senha incorreta.' : 'Matrícula não encontrada.';
     errEl.style.display='block'; return;
   }
 
   const nome = found.nomeSoc||found.usuario;
   const perfil = normPerfil(found.perfil);
   const equipes = (found.equipes||'').split(',').map(e=>e.trim()).filter(Boolean);
-  S.user = {codigo:found.id||u, matricula:found.pin||u, nome, perfil};
+  S.user = {codigo:found.id||u, matricula:found.pin, nome, perfil};
 
   if(!equipes.length){ errEl.textContent='Sem equipe cadastrada.'; errEl.style.display='block'; return; }
 
@@ -237,7 +238,61 @@ function startSession() {
   // Buscar foto do usuário logado
   buscarFotoUsuario();
 
-  // Buscar foto do usuário logado via Apps Script
+  // ═══════════════════════════════════════
+// MUDAR SENHA
+// ═══════════════════════════════════════
+function abrirMudarSenha() {
+  $('s-atual').value=''; $('s-nova').value=''; $('s-conf').value='';
+  $('sh-senha').classList.add('on');
+}
+
+async function confirmarMudarSenha() {
+  const atual = $('s-atual').value.trim();
+  const nova  = $('s-nova').value.trim();
+  const conf  = $('s-conf').value.trim();
+  if(!atual){ msg('Informe a senha atual.','er'); return; }
+  if(!nova || nova.length < 4){ msg('Nova senha deve ter ao menos 4 caracteres.','er'); return; }
+  if(nova !== conf){ msg('As senhas não coincidem.','er'); return; }
+  load('Salvando...');
+  try {
+    const res = await callScript({
+      acao:'mudarSenha',
+      matricula: S.user.matricula||S.user.codigo,
+      senhaAtual: atual,
+      novaSenha: nova
+    });
+    unload();
+    if(res.erro){ msg(res.erro,'er'); return; }
+    $('sh-senha').classList.remove('on');
+    msg('✅ Senha alterada com sucesso!','ok');
+    // Atualizar senha na sessão local
+    if(S.loginData){
+      const u = S.loginData.find(r=>r.pin===(S.user.matricula||S.user.codigo));
+      if(u) u.senha = nova;
+    }
+  } catch(e){ unload(); msg('Erro: '+e.message,'er'); }
+}
+async function mudarSenha(senhaAtual, novaSenha) {
+  const res = await callScript({
+    acao: 'mudarSenha',
+    matricula: S.user.matricula || S.user.codigo,
+    senhaAtual: senhaAtual,
+    novaSenha: novaSenha
+  });
+  return res;
+}
+
+async function resetSenha(matricula) {
+  const res = await callScript({acao: 'resetSenha', matricula: matricula});
+  return res;
+}
+
+async function validarMatriculaDuplicada(matricula) {
+  const res = await callScript({acao: 'validarMatricula', matricula: matricula});
+  return res.existe || false;
+}
+
+// Buscar foto do usuário logado via Apps Script
 async function buscarFotoUsuario() {
   try {
     const dados = await callScript({acao:'lerFotoUsuario', pin: S.user.matricula||S.user.codigo});
@@ -663,20 +718,27 @@ function closeNovo(){ $('sh-novo').classList.remove('on'); }
 async function salvarNovo(){
   const pin=$('nn-pin').value.trim(),nc=$('nn-nc').value.trim();
   const ns=$('nn-ns').value.trim(),us=$('nn-us').value.trim();
-  if(!pin||!nc||!ns||!us){ msg('Preencha os campos obrigatórios.','er'); return; }
+  if(!pin||!nc||!ns){ msg('Preencha os campos obrigatórios.','er'); return; }
+  // Validar matrícula duplicada
+  load('Verificando matrícula...');
+  try {
+    const chk = await callScript({acao:'validarMatricula', matricula:pin});
+    if(chk.existe){ unload(); msg('Matrícula '+pin+' já cadastrada!','er'); return; }
+  } catch(e){ unload(); }
   const id='CP'+pin;
-  const vals=[id,'',pin,nc,ns,us,$('nn-sx').value,$('nn-tel').value.trim(),'',
+  // Col F = senha padrão = matrícula
+  const vals=[id,'',pin,nc,ns,pin,$('nn-sx').value,$('nn-tel').value.trim(),'',
     $('nn-em').value.trim(),'','','','','','','','','','','Ativo','',$('nn-pf').value];
   load('Cadastrando...');
   try{
     await gravar('Cadastro',vals);
-    const novo={linha:S.cadAll.length+2,id,foto:'',pin,nomeComp:nc,nomeSoc:ns,usuario:us,
+    const novo={linha:S.cadAll.length+2,id,foto:'',pin,nomeComp:nc,nomeSoc:ns,usuario:pin,
       sexo:$('nn-sx').value,tel:$('nn-tel').value.trim(),rg:'',email:$('nn-em').value.trim(),
       declaMinist:'',liderGA:'',umComDeus:'',batizado:'',grupo:'',culto:'',senib:'',
-      aniversario:'',equipes:'',fazInteg:'',sit:'Ativo',obs:'',$:'nn-pf'&&($('nn-pf').value),perfil:$('nn-pf').value};
+      aniversario:'',equipes:'',fazInteg:'',sit:'Ativo',obs:'',perfil:$('nn-pf').value};
     S.cadAll.push(novo); S.cad.push(novo);
     unload(); closeNovo(); renderCad();
-    msg('✅ Membro cadastrado!','ok');
+    msg('✅ Membro cadastrado! Senha padrão: '+pin,'ok');
   }catch(e){unload();msg('Erro: '+e.message,'er');}
 }
 
