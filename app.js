@@ -42,7 +42,18 @@ function normPerfil(r) {
 }
 function setOpt(id, val) {
   const sel = $(id); if(!sel||val===undefined||val===null) return;
-  const v = (val||'').toString().trim().toUpperCase();
+  const v = (val||'').toString().trim();
+  // Tentar setar direto primeiro
+  sel.value = v;
+  if(sel.value === v) return;
+  // Tentar case-insensitive
+  const vUp = v.toUpperCase();
+  for(const opt of sel.options) {
+    if(opt.value.toUpperCase()===vUp || opt.text.toUpperCase()===vUp) {
+      sel.value = opt.value; return;
+    }
+  }
+  // Mapeamentos especiais
   const MAP = {
     'M':'Masculino','MASCULINO':'Masculino',
     'F':'Feminino','FEMININO':'Feminino',
@@ -52,15 +63,15 @@ function setOpt(id, val) {
     'SIM':'Sim','NÃO':'Não','NAO':'Não',
     'ATIVO':'Ativo','INATIVO':'Inativo'
   };
-  const mapped = MAP[v];
-  for(const opt of sel.options) {
-    const ov = opt.value.trim().toUpperCase();
-    const ot = opt.text.trim().toUpperCase();
-    if(ov===v||ot===v||(mapped&&(ov===mapped.toUpperCase()||ot===mapped.toUpperCase()))) {
-      sel.value = opt.value; return;
+  const mapped = MAP[vUp];
+  if(mapped){
+    sel.value = mapped;
+    if(sel.value !== mapped){
+      for(const opt of sel.options){
+        if(opt.value===mapped||opt.text===mapped){ sel.value=opt.value; return; }
+      }
     }
   }
-  sel.value = val;
 }
 function getSemana() {
   const h = new Date(), d = h.getDay();
