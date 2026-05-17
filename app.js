@@ -842,10 +842,10 @@ async function loadIntegracao() {
       return;
     }
 
-    // Agrupar por capelão
+    // Agrupar por INTEGRADOR (col K — capelão distribuído)
     const grupos = {}, ordem = [];
     lista.forEach(d => {
-      const cp = d.capelao || 'Sem capelão';
+      const cp = d.integrador || d.capelao || 'Sem integrador';
       if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
       grupos[cp].push(d);
     });
@@ -853,7 +853,7 @@ async function loadIntegracao() {
     ls.innerHTML = ordem.map((cp, i) => `
       <div class="acc-hdr" id="iacc-hdr-${i}" onclick="toggleIAcc(${i})">
         <div class="acc-hdr-left">
-          <span style="font-size:14px">👤</span>
+          <span style="font-size:16px">👤</span>
           <span class="acc-hdr-eq">${cp}</span>
           <span class="acc-cnt">${grupos[cp].length}</span>
         </div>
@@ -862,12 +862,12 @@ async function loadIntegracao() {
       <div class="acc-body" id="iacc-body-${i}">
         ${grupos[cp].map(d => {
           const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
-          return `<div class="dec-item" onclick="abrirDetInteg('${d.id}')" style="cursor:pointer">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div class="dec-name">${d.nome}</div>
-              <span class="badge ${ok?'bg-g':'bg-r'}">${ok?'❤️ SIM':'❤️ NÃO'}</span>
+          return `<div class="dec-item" onclick="abrirDetInteg('${d.id}')" style="cursor:pointer;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+              <div style="font-size:17px;font-weight:700;color:var(--navy)">${d.nome}</div>
+              <span class="badge ${ok?'bg-g':'bg-r'}" style="font-size:13px;padding:5px 12px">${ok?'❤️ SIM':'❤️ NÃO'}</span>
             </div>
-            <div class="dec-sub">${d.assistido} · ${d.equipe}</div>
+            <div style="font-size:14px;color:var(--g5)">${d.assistido} · ${d.hospital}</div>
           </div>`;
         }).join('')}
       </div>`).join('');
@@ -896,30 +896,33 @@ function abrirDetInteg(id) {
   if(!d) return;
   S._curInteg = d;
 
+  $('id-nm').textContent  = d.nome     || '-';
   $('id-dv').textContent  = d.data     || '-';
   $('id-eq').textContent  = d.hospital || d.equipe || '-';
   $('id-cp').textContent  = d.capelao  || '-';
-  $('id-as').textContent  = d.assistido|| '-';
-  $('id-nm').textContent  = d.nome     || '-';
+  $('id-as').textContent  = d.assistido? '🛏️ '+d.assistido : '-';
   $('id-tel').textContent = d.tel      || '-';
   $('id-obs').textContent = d.obs      || '-';
 
   const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
   const integEl = $('id-integ');
   integEl.innerHTML = ok
-    ? '<span class="badge bg-g">❤️ SIM</span>'
-    : '<span class="badge bg-r">❤️ NÃO</span>';
+    ? '<span class="badge bg-g" style="font-size:15px;padding:6px 14px">❤️ SIM — Integrado</span>'
+    : '<span class="badge bg-r" style="font-size:15px;padding:6px 14px">❤️ NÃO — Pendente</span>';
 
   // Botão registrar — desabilitar se já integrado
   const btnReg = $('btn-integ-reg');
+  const btnDiv = btnReg.querySelector('div:last-child div:first-child');
   if(ok){
-    btnReg.textContent = '✅ Já integrado';
     btnReg.disabled = true;
     btnReg.style.opacity = '0.5';
+    btnReg.style.background = '#27ae60';
+    if(btnDiv) btnDiv.textContent = 'Já integrado ✓';
   } else {
-    btnReg.textContent = '✅ Registrar Integração';
     btnReg.disabled = false;
     btnReg.style.opacity = '1';
+    btnReg.style.background = 'var(--navy)';
+    if(btnDiv) btnDiv.textContent = 'Registrar Integração';
   }
 
   ir('integ-det');
