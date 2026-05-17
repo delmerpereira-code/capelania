@@ -1386,37 +1386,32 @@ async function salvarResumo() {
 
   let fotoUrl = '';
 
-  // Upload foto para o Drive se selecionada
+  // Upload foto direto para Cloudinary (evita limite de URL do JSONP)
   if(S_RES.dados){
     load('Enviando foto... aguarde');
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((ok,er) => {
-        reader.onload = e => ok(e.target.result.split(',')[1]);
-        reader.onerror = er;
-        reader.readAsDataURL(S_RES.dados);
-      });
-      console.log('Upload foto:', S_RES.fotoNome, 'tipo:', S_RES.dados.type, 'base64 len:', base64.length);
-      const res = await callScript({
-        acao:  'uploadFotoVisita',
-        nome:  S_RES.fotoNome,
-        tipo:  S_RES.dados.type || 'image/jpeg',
-        dados: base64
-      });
-      console.log('Upload result:', JSON.stringify(res));
-      if(res && res.url){
-        fotoUrl = res.url;
+      const formData = new FormData();
+      formData.append('file', S_RES.dados);
+      formData.append('upload_preset', CLOUD_PRESET);
+      formData.append('folder', 'capelania/visitas');
+      formData.append('public_id', S_RES.fotoNome.replace(/\.[^.]+$/, '')); // sem extensão
+
+      const resp = await fetch(CLOUD_URL, {method:'POST', body: formData});
+      const data = await resp.json();
+      console.log('Cloudinary visita:', data.secure_url || data.error);
+
+      if(data.secure_url){
+        fotoUrl = data.secure_url;
         msg('📷 Foto enviada!', 'ok');
       } else {
         unload();
-        msg('Erro foto: ' + (res && res.erro ? res.erro : 'sem resposta'), 'er');
-        // Perguntar se quer continuar sem foto
-        if(!confirm('Erro ao salvar foto. Continuar sem a foto?')) return;
+        const errMsg = data.error ? data.error.message : 'Erro desconhecido';
+        if(!confirm('Erro ao salvar foto: '+errMsg+'. Continuar sem a foto?')) return;
       }
     } catch(e) {
       unload();
       console.error('Upload erro:', e);
-      if(!confirm('Erro ao enviar foto: '+e.message+'. Continuar sem a foto?')) return;
+      if(!confirm('Erro ao enviar foto. Continuar sem a foto?')) return;
     }
   }
 
