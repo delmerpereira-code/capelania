@@ -380,10 +380,18 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 
 <!-- INTEGRAÇÃO DETALHE -->
 <div class="sc" id="sc-integ-det">
-  <div class="hdr">
+  <div class="hdr" style="padding:0 8px">
     <button class="hdr-back" onclick="ir('integracao')">←</button>
-    <div class="hdr-title">Detalhes</div>
-    <div style="width:40px"></div>
+    <!-- Setas de navegação -->
+    <button onclick="navInteg(-1)" id="btn-prev"
+      style="width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">‹</button>
+    <div style="flex:1;text-align:center;min-width:0">
+      <div class="hdr-title" id="nav-nome" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px"></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.45)" id="nav-pos"></div>
+    </div>
+    <button onclick="navInteg(1)" id="btn-next"
+      style="width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">›</button>
+    <div style="width:8px"></div>
   </div>
   <div class="pg no-nav" style="padding-bottom:40px">
 
