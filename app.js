@@ -924,7 +924,26 @@ function renderIntegLista() {
     if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
     grupos[cp].push(d);
   });
-  ordem.forEach(cp => { grupos[cp].sort((a,b) => isIntegrado(a) - isIntegrado(b)); });
+  // Ordenar integradores: Feminino primeiro, depois Masculino, cada um por nome ASC
+  function sexoInteg(nome) {
+    const m = (S.cadAll||[]).find(x => (x.nomeSoc||x.nomeComp||'').toLowerCase()===nome.toLowerCase());
+    return m ? (m.sexo||'').toUpperCase() : '';
+  }
+  ordem.sort((a,b) => {
+    const sa = sexoInteg(a), sb = sexoInteg(b);
+    const aF = sa==='FEMININO'||sa==='F', bF = sb==='FEMININO'||sb==='F';
+    if(aF && !bF) return -1;
+    if(!aF && bF) return 1;
+    return a.localeCompare(b, 'pt-BR');
+  });
+  // Dentro de cada grupo: pendentes primeiro, por nome ASC
+  ordem.forEach(cp => {
+    grupos[cp].sort((a,b) => {
+      const okA = isIntegrado(a), okB = isIntegrado(b);
+      if(okA !== okB) return okA - okB;
+      return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
+    });
+  });
   ls.innerHTML = ordem.map((cp, i) => {
     const simCnt = grupos[cp].filter(d=>isIntegrado(d)).length;
     const naoCnt = grupos[cp].length - simCnt;
@@ -958,6 +977,26 @@ function renderIntegLista() {
   }).join('');
 }
 
+
+function proximoInteg(atual) {
+  const lista = S._integLista || [];
+  const integrador = atual.integrador || atual.capelao || '';
+
+  // Buscar próximo pendente do mesmo integrador
+  const doInteg = lista.filter(d =>
+    (d.integrador||d.capelao||'') === integrador && !isIntegrado(d)
+  ).sort((a,b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR'));
+
+  if(doInteg.length > 0) {
+    // Tem próximo — abrir automaticamente
+    msg('➡️ Próximo: ' + doInteg[0].nome, '');
+    setTimeout(() => abrirDetInteg(doInteg[0].id), 800);
+  } else {
+    // Acabou a lista do integrador
+    msg('🎉 Sem pendências para ' + integrador.split(' ')[0] + '!', 'ok');
+    setTimeout(() => ir('integracao'), 1500);
+  }
+}
 
 function toggleIAcc(idx) {
   const hdr  = $('iacc-hdr-'+idx);
@@ -1072,13 +1111,11 @@ async function registrarIntegracao() {
     unload();
     // Atualizar localmente
     d.integrado = 'Sim';
-    // Atualizar badge na tela
-    $('id-integ').innerHTML = '<span class="badge bg-g">❤️ SIM</span>';
-    btn.textContent = '✅ Já integrado';
-    btn.style.opacity = '0.5';
     msg('✅ Integração registrada!', 'ok');
     // Recarregar lista em background
     loadIntegracao();
+    // Ir automaticamente para o próximo pendente do mesmo integrador
+    setTimeout(() => proximoInteg(d), 1200);
   } catch(e) {
     unload();
     btn.disabled = false;
