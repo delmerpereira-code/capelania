@@ -563,12 +563,18 @@ function fillView(m){
   $('m-name').textContent = ns;
   $('m-id').textContent = m.id;
 
-  // Avatar
+  // Avatar com foto
   const av = $('m-av');
   if(m.foto && m.foto.indexOf('http')===0){
     const fotoUrl = converterUrlFoto(m.foto);
-    av.innerHTML=`<img src="${fotoUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${ini(ns)}'">`;
-  } else av.textContent = ini(ns);
+    av.innerHTML=`<img src="${fotoUrl}" style="width:100%;height:100%;object-fit:cover"
+      onerror="this.style.display='none';this.parentElement.textContent='${ini(ns)}'">`;
+  } else {
+    av.textContent = ini(ns);
+  }
+  // Botão câmera — só para Líder
+  const camBtn = $('btn-cam-m');
+  if(camBtn) camBtn.style.display = S.user?.perfil==='Líder' ? 'flex' : 'none';
 
   // Badge
   const bd = $('m-badge');
