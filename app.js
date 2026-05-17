@@ -620,7 +620,7 @@ function showEdit(pane, on){
   if(on && pane===0){
     const m=S.cur;
     $('ep').value=m.pin||''; $('enc').value=m.nomeComp||''; $('ens').value=m.nomeSoc||'';
-    $('eus').value=m.usuario||''; setOpt('esx',m.sexo);
+    setOpt('esx',m.sexo);
     $('etel').value=m.tel||''; $('erg').value=m.rg||''; $('eem').value=m.email||'';
     $('ean').value=m.aniversario||'';
   }
@@ -643,9 +643,9 @@ function buildVals(m, overrides){
 
 async function salvarDados(){
   const m=S.cur;
-  const pin=$('ep').value.trim(),nc=$('enc').value.trim(),ns=$('ens').value.trim(),us=$('eus').value.trim();
-  if(!pin||!nc||!ns||!us){ msg('Preencha os campos obrigatórios.','er'); return; }
-  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:us,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:$('ean').value.trim()};
+  const pin=$('ep').value.trim(),nc=$('enc').value.trim(),ns=$('ens').value.trim();
+  if(!pin||!nc||!ns){ msg('Preencha os campos obrigatórios.','er'); return; }
+  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:m.usuario||pin,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:$('ean').value.trim()};
   load('Salvando...');
   try{
     await atualizar('Cadastro', m.linha, buildVals(m,ovr));
