@@ -915,7 +915,11 @@ function renderIntegLista() {
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
   // Filtro de busca por nome
   const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
-  if(busca) lista = lista.filter(d => (d.nome||'').toLowerCase().indexOf(busca) >= 0);
+  if(busca) lista = lista.filter(d =>
+    (d.nome||'').toLowerCase().indexOf(busca) >= 0 ||
+    (d.integrador||'').toLowerCase().indexOf(busca) >= 0 ||
+    (d.capelao||'').toLowerCase().indexOf(busca) >= 0
+  );
   if(!lista.length){
     const msgTxt = S._integFiltro==='sim' ? 'Nenhum integrado ainda.' : S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
     ls.innerHTML = `<div class="empty"><div class="ei">${S._integFiltro==='nao'?'🎉':'🔗'}</div><p>${msgTxt}</p></div>`;
