@@ -600,10 +600,6 @@ function fillView(m){
   $('vm-sit').textContent=m.sit||'-';        $('vm-pf').textContent=m.perfil||'-';
   $('vm-obs').textContent=m.obs||'-';
 
-  // Botão câmera: só para Líder
-  const camBtn = $('btn-cam-m');
-  if(camBtn) camBtn.style.display = S.user?.perfil==='Líder' ? 'flex' : 'none';
-
   // Equipes
   renderEqList(m.equipes||'');
 }
