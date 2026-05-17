@@ -835,51 +835,95 @@ async function loadIntegracao() {
     console.log('Integração response:', JSON.stringify(dados).substr(0,200));
     const lista = dados.values || [];
     console.log('Total integrações:', lista.length);
+
+    // Guardar lista completa para filtros
+    S._integLista = lista;
+    S._integFiltro = S._integFiltro || 'todos';
+
+    // Contadores
+    const totalSim = lista.filter(d => isIntegrado(d)).length;
+    const totalNao = lista.length - totalSim;
     $('i-total').textContent = lista.length;
+    if($('i-sim')) $('i-sim').textContent = totalSim;
+    if($('i-nao')) $('i-nao').textContent = totalNao;
 
     if(!lista.length){
-      ls.innerHTML = '<div class="empty"><div class="ei">🔗</div><p>Nenhuma integração pendente<br>desta semana.</p></div>';
+      ls.innerHTML = '<div class="empty"><div class="ei">🔗</div><p>Nenhuma integração<br>desta semana.</p></div>';
       return;
     }
 
-    // Agrupar por INTEGRADOR (col K — capelão distribuído)
-    const grupos = {}, ordem = [];
-    lista.forEach(d => {
-      const cp = d.integrador || d.capelao || 'Sem integrador';
-      if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
-      grupos[cp].push(d);
-    });
-
-    ls.innerHTML = ordem.map((cp, i) => `
-      <div class="acc-hdr" id="iacc-hdr-${i}" onclick="toggleIAcc(${i})">
-        <div class="acc-hdr-left">
-          <span style="font-size:16px">👤</span>
-          <span class="acc-hdr-eq">${cp}</span>
-          <span class="acc-cnt">${grupos[cp].length}</span>
-        </div>
-        <span class="acc-arr">▾</span>
-      </div>
-      <div class="acc-body" id="iacc-body-${i}">
-        ${grupos[cp].map(d => {
-          const ok = (d.integrado||'').toLowerCase().indexOf('sim') >= 0 || d.integrado === 'S';
-          return `<div class="dec-item" onclick="abrirDetInteg('${d.id}')" style="cursor:pointer;padding:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
-              <div style="font-size:17px;font-weight:700;color:var(--navy)">${d.nome}</div>
-              <span class="badge ${ok?'bg-g':'bg-r'}" style="font-size:13px;padding:5px 12px">${ok?'❤️ SIM':'❤️ NÃO'}</span>
-            </div>
-            <div style="font-size:14px;color:var(--g5)">${d.assistido} · ${d.hospital}</div>
-          </div>`;
-        }).join('')}
-      </div>`).join('');
-
-    // Guardar dados para acesso rápido
-    S._integLista = lista;
-
+    renderIntegLista();
   } catch(e) {
     ls.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`;
     console.error('Integração erro:', e);
   }
 }
+
+function isIntegrado(d) {
+  const v = (d.integrado||'').toLowerCase();
+  return v.indexOf('sim') >= 0 || v === 's';
+}
+
+function filtroInteg(tipo) {
+  S._integFiltro = tipo;
+  ['todos','nao','sim'].forEach(t => {
+    const el = $('if-'+t);
+    if(el) el.classList.toggle('on', t===tipo);
+  });
+  renderIntegLista();
+}
+
+function renderIntegLista() {
+  const ls = $('i-lista');
+  if(!S._integLista) return;
+  let lista = S._integLista;
+  if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
+  if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
+  if(!lista.length){
+    const msgTxt = S._integFiltro==='sim' ? 'Nenhum integrado ainda.' : S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
+    ls.innerHTML = `<div class="empty"><div class="ei">${S._integFiltro==='nao'?'🎉':'🔗'}</div><p>${msgTxt}</p></div>`;
+    return;
+  }
+  const grupos = {}, ordem = [];
+  lista.forEach(d => {
+    const cp = d.integrador || d.capelao || 'Sem integrador';
+    if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
+    grupos[cp].push(d);
+  });
+  ordem.forEach(cp => { grupos[cp].sort((a,b) => isIntegrado(a) - isIntegrado(b)); });
+  ls.innerHTML = ordem.map((cp, i) => {
+    const simCnt = grupos[cp].filter(d=>isIntegrado(d)).length;
+    const naoCnt = grupos[cp].length - simCnt;
+    return `<div class="acc-hdr" id="iacc-hdr-${i}" onclick="toggleIAcc(${i})">
+        <div class="acc-hdr-left">
+          <span style="font-size:16px">👤</span>
+          <span class="acc-hdr-eq">${cp}</span>
+          <span class="acc-cnt">${grupos[cp].length}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${naoCnt>0?`<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">🤍 ${naoCnt}</span>`:''}
+          ${simCnt>0?`<span style="background:#dcfce7;color:#15803d;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">❤️ ${simCnt}</span>`:''}
+          <span class="acc-arr">▾</span>
+        </div>
+      </div>
+      <div class="acc-body" id="iacc-body-${i}">
+        ${grupos[cp].map(d => {
+          const ok = isIntegrado(d);
+          return `<div onclick="abrirDetInteg('${d.id}')" style="cursor:pointer;padding:14px 16px;border-bottom:1px solid var(--g1);display:flex;align-items:center;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:17px;font-weight:700;color:var(--navy)">${d.nome}</div>
+              <div style="font-size:13px;color:var(--g5);margin-top:3px">${d.assistido} · ${d.hospital}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+              <span style="font-size:22px">${ok?'❤️':'🤍'}</span>
+              <span style="font-size:11px;font-weight:700;color:${ok?'#15803d':'#991b1b'}">${ok?'SIM':'NÃO'}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
+}
+
 
 function toggleIAcc(idx) {
   const hdr  = $('iacc-hdr-'+idx);
@@ -931,7 +975,8 @@ function abrirDetInteg(id) {
 function abrirWpp1() {
   const d = S._curInteg; if(!d) return;
   const tel = '55' + (d.tel||'').replace(/\D/g,'');
-  const integrador = S.user?.nome || '';
+  // [Integrador] = col K — quem vai fazer o contato
+  const integrador = d.integrador || d.capelao || S.user?.nome || '';
   const msg = encodeURIComponent(
     `Oi, tudo bem? Aqui é o ${integrador} !!\n\n` +
     `Estive com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
@@ -945,6 +990,8 @@ function abrirWpp1() {
 function abrirWpp2() {
   const d = S._curInteg; if(!d) return;
   const tel = '55' + (d.tel||'').replace(/\D/g,'');
+  // [Integrador] = col K
+  const integrador = d.integrador || d.capelao || S.user?.nome || '';
   const msg = 'Parabéns pela sua decisão de seguir a Cristo! 🎉' +
     '%20%0A%0AQuero te convidar para assistir às palestras UM COM DEUS, onde você vai fortalecer ainda mais sua fé. São gratuitas e acontecem num ambiente acolhedor: 👇🏼' +
     '%20%0A%20%0A📍 *_Auditório da NOVA IGREJA BATISTA_*' +
@@ -970,7 +1017,7 @@ async function registrarIntegracao() {
       acao:      'gravarIntegracao',
       idInteg:   idInteg,
       idDecisao: d.idDecisao || d.id,
-      capelao:   S.user?.nome || d.capelao
+      capelao:   d.integrador || d.capelao || S.user?.nome || ''
     });
     unload();
     // Atualizar localmente
