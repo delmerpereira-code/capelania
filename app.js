@@ -883,7 +883,7 @@ async function onFotoChangeM(event) {
     formData.append('file', file);
     formData.append('upload_preset', CLOUD_PRESET);
     formData.append('public_id', pin);
-    formData.append('folder', 'capelania');
+    formData.append('folder', 'capelania/Membros');
 
     const resp = await fetch(CLOUD_URL, {method:'POST', body: formData});
     const data = await resp.json();
@@ -1393,7 +1393,7 @@ async function salvarResumo() {
       const formData = new FormData();
       formData.append('file', S_RES.dados);
       formData.append('upload_preset', CLOUD_PRESET);
-      formData.append('folder', 'capelania/visitas');
+      formData.append('folder', 'capelania/Visitas');
       formData.append('public_id', S_RES.fotoNome.replace(/\.[^.]+$/, '')); // sem extensão
 
       const resp = await fetch(CLOUD_URL, {method:'POST', body: formData});
