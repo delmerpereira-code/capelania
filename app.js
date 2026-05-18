@@ -32,9 +32,6 @@ function msg(m, t) {
 function fD(d) {
   return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
 }
-function normalizeText(str) {
-  return (str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-}
 function gId() { return Math.random().toString(36).substr(2,8); }
 function ini(n) {
   return (n||'').trim().split(' ').filter(Boolean).slice(0,2).map(x => x[0].toUpperCase()).join('');
@@ -270,28 +267,29 @@ async function confirmarMudarSenha() {
   if(!atual){ msg('Informe a senha atual.','er'); return; }
   if(!nova || nova.length < 4){ msg('Nova senha deve ter ao menos 4 caracteres.','er'); return; }
   if(nova !== conf){ msg('As senhas não coincidem.','er'); return; }
-  const btn = $('sh-senha')?.querySelector('button');
-  if(btn){ btn.disabled = true; btn.textContent = 'Salvando...'; }
+  const btn = document.querySelector('#sh-senha .btn-p');
+  if(btn){ btn.disabled=true; btn.textContent='Salvando...'; }
   load('Salvando...');
   try {
     const res = await callScript({
-      acao:'mudarSenha',
-      matricula: S.user.matricula||S.user.codigo,
-      senhaAtual: atual,
-      novaSenha: nova
+      acao:       'mudarSenha',
+      matricula:  encodeURIComponent(S.user.matricula||S.user.codigo),
+      senhaAtual: encodeURIComponent(atual),
+      novaSenha:  encodeURIComponent(nova)
     });
     unload();
+    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
     if(res.erro){ msg(res.erro,'er'); return; }
     $('sh-senha').classList.remove('on');
     msg('✅ Senha alterada com sucesso!','ok');
-    // Atualizar senha na sessão local
     if(S.loginData){
       const u = S.loginData.find(r=>r.pin===(S.user.matricula||S.user.codigo));
       if(u) u.senha = nova;
     }
-  } catch(e){ unload(); msg('Erro: '+e.message,'er'); }
-  finally {
-    if(btn){ btn.disabled = false; btn.textContent = '💾 Salvar Nova Senha'; }
+  } catch(e){
+    unload();
+    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
+    msg('Erro: '+e.message,'er');
   }
 }
 async function mudarSenha(senhaAtual, novaSenha) {
@@ -1085,12 +1083,11 @@ function renderIntegLista() {
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
   // Filtro de busca por nome
-  const busca = normalizeText($('i-search') ? $('i-search').value : '');
+  const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
   if(busca) lista = lista.filter(d =>
-    normalizeText(d.nome).indexOf(busca) >= 0 ||
-    normalizeText(d.assistido).indexOf(busca) >= 0 ||
-    normalizeText(d.integrador).indexOf(busca) >= 0 ||
-    normalizeText(d.capelao).indexOf(busca) >= 0
+    (d.nome||'').toLowerCase().indexOf(busca) >= 0 ||
+    (d.integrador||'').toLowerCase().indexOf(busca) >= 0 ||
+    (d.capelao||'').toLowerCase().indexOf(busca) >= 0
   );
   if(!lista.length){
     const msgTxt = S._integFiltro==='sim' ? 'Nenhum integrado ainda.' : S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
@@ -1304,8 +1301,7 @@ async function registrarIntegracao() {
     return;
   }
   const btn = $('btn-integ-reg');
-  const btnLabel = btn ? btn.querySelector('div:last-child div:first-child') : null;
-  if(btn){ btn.disabled = true; if(btnLabel) btnLabel.textContent = 'Registrando...'; }
+  btn.disabled = true; btn.textContent = 'Registrando...';
   load('Registrando integração...');
   try {
     // Gerar ID único
@@ -1320,25 +1316,17 @@ async function registrarIntegracao() {
     // Atualizar localmente
     d.integrado = 'Sim';
     msg('✅ Integração registrada!', 'ok');
+    // Restaurar botão imediatamente
+    btn.disabled = false;
+    btn.textContent = '✅ Registrar Integração';
     // Recarregar lista em background
     loadIntegracao();
-    // Restaurar botão antes de ir para o próximo
-    if(btn){
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.background = 'var(--navy)';
-      if(btnLabel) btnLabel.textContent = 'Registrar Integração';
-    }
     // Ir automaticamente para o próximo pendente do mesmo integrador
     setTimeout(() => proximoInteg(d), 1200);
   } catch(e) {
     unload();
-    if(btn){
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.background = 'var(--navy)';
-      if(btnLabel) btnLabel.textContent = 'Registrar Integração';
-    }
+    btn.disabled = false;
+    btn.textContent = '✅ Registrar Integração';
     msg('Erro ao registrar: ' + e.message, 'er');
   }
 }
@@ -1553,11 +1541,11 @@ async function loadAniv() {
 
 function renderAniv() {
   const ls = $('aniv-lista');
-  const busca = normalizeText($('aniv-search')?$('aniv-search').value:'');
+  const busca = ($('aniv-search')?$('aniv-search').value:'').toLowerCase().trim();
 
   let lista = (S._anivLista||[]).filter(m => {
     if(!m.nome || !m.mes) return false;
-    if(busca && normalizeText(m.nome).indexOf(busca) < 0) return false;
+    if(busca && (m.nome||'').toLowerCase().indexOf(busca) < 0) return false;
     return true;
   });
 
