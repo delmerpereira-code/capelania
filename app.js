@@ -1591,7 +1591,7 @@ function renderAniv() {
             <div style="width:48px;height:48px;border-radius:50%;background:var(--g2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy)">
               ${temFoto ? `<img src="${converterUrlFoto(m.foto)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${ini(nome)}'">` : ini(nome)}
             </div>
-            <div style="flex:1;min-width:0;cursor:pointer" onclick="wppAniv('${nome}', '${(m.tel||'').replace(/\D/g,'')}')">
+            <div style="flex:1;min-width:0;cursor:pointer" onclick="wppAniv('${nome}','${(m.tel||'')}')">
               <div style="font-size:15px;font-weight:700;color:var(--navy)">
                 ${isHoje?'🎉 ':''}${nome}
               </div>
