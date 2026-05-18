@@ -1496,6 +1496,25 @@ async function salvarResumo() {
 // ═══════════════════════════════════════
 // ANIVERSARIANTES
 // ═══════════════════════════════════════
+function wppAniv(nome, tel) {
+  const primeiro = (nome||'').split(' ')[0];
+  const msg = encodeURIComponent(
+    `Feliz aniversário, ${primeiro}! ` +
+    `Que o *Senhor* renove em você, a cada novo ano, a paixão pela missão de levar o evangelho e consolar os que sofrem. ` +
+    `Que *Deus* te abençoe com muita saúde, sabedoria e prosperidade, para que sua vida continue sendo instrumento de paz e salvação.
+
+` +
+    `Conte com minhas orações hoje e sempre!`
+  );
+  const telNum = (tel||'').replace(/\D/g,'');
+  if(telNum.length >= 10){
+    window.open('https://api.whatsapp.com/send?phone=55'+telNum+'&text='+msg, '_blank');
+  } else {
+    // Sem telefone — abrir WhatsApp sem destinatário para copiar a mensagem
+    window.open('https://api.whatsapp.com/send?text='+msg, '_blank');
+  }
+}
+
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -1572,7 +1591,7 @@ function renderAniv() {
             <div style="width:48px;height:48px;border-radius:50%;background:var(--g2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy)">
               ${temFoto ? `<img src="${converterUrlFoto(m.foto)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${ini(nome)}'">` : ini(nome)}
             </div>
-            <div style="flex:1;min-width:0">
+            <div style="flex:1;min-width:0;cursor:pointer" onclick="wppAniv('${nome}', '${(m.tel||'').replace(/\D/g,'')}')">
               <div style="font-size:15px;font-weight:700;color:var(--navy)">
                 ${isHoje?'🎉 ':''}${nome}
               </div>
