@@ -252,67 +252,28 @@ function startSession() {
   // Buscar foto do usuário logado
   buscarFotoUsuario();
 
-  // ═══════════════════════════════════════
-// MUDAR SENHA
-// ═══════════════════════════════════════
-function abrirMudarSenha() {
-  $('s-atual').value=''; $('s-nova').value=''; $('s-conf').value='';
-  $('sh-senha').classList.add('on');
-}
-
-async function confirmarMudarSenha() {
-  const atual = $('s-atual').value.trim();
-  const nova  = $('s-nova').value.trim();
-  const conf  = $('s-conf').value.trim();
-  if(!atual){ msg('Informe a senha atual.','er'); return; }
-  if(!nova || nova.length < 4){ msg('Nova senha deve ter ao menos 4 caracteres.','er'); return; }
-  if(nova !== conf){ msg('As senhas não coincidem.','er'); return; }
-  const btn = document.querySelector('#sh-senha .btn-p');
-  if(btn){ btn.disabled=true; btn.textContent='Salvando...'; }
-  load('Salvando...');
+  // Gravar log de acesso — silencioso, sem bloquear o app
   try {
-    const res = await callScript({
-      acao:       'mudarSenha',
-      matricula:  encodeURIComponent(S.user.matricula||S.user.codigo),
-      senhaAtual: encodeURIComponent(atual),
-      novaSenha:  encodeURIComponent(nova)
+    const agora = new Date();
+    const dataHora = fD(agora) + ' ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    callScript({
+      acao: 'gravar',
+      aba:  'Log',
+      dados: encodeURIComponent(JSON.stringify([
+        dataHora,
+        S.user.codigo,
+        S.user.nome,
+        S.equipe,
+        S.user.perfil,
+        navigator.userAgent.indexOf('Mobile')>=0 ? 'Celular' : 'Computador'
+      ]))
     });
-    unload();
-    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
-    if(res.erro){ msg(res.erro,'er'); return; }
-    $('sh-senha').classList.remove('on');
-    msg('✅ Senha alterada com sucesso!','ok');
-    if(S.loginData){
-      const u = S.loginData.find(r=>r.pin===(S.user.matricula||S.user.codigo));
-      if(u) u.senha = nova;
-    }
-  } catch(e){
-    unload();
-    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
-    msg('Erro: '+e.message,'er');
-  }
-}
-async function mudarSenha(senhaAtual, novaSenha) {
-  const res = await callScript({
-    acao: 'mudarSenha',
-    matricula: S.user.matricula || S.user.codigo,
-    senhaAtual: senhaAtual,
-    novaSenha: novaSenha
-  });
-  return res;
+  } catch(e) { console.log('Log acesso:', e); }
 }
 
-async function resetSenha(matricula) {
-  const res = await callScript({acao: 'resetSenha', matricula: matricula});
-  return res;
-}
-
-async function validarMatriculaDuplicada(matricula) {
-  const res = await callScript({acao: 'validarMatricula', matricula: matricula});
-  return res.existe || false;
-}
-
-// Buscar foto do usuário logado via Apps Script
+// ═══════════════════════════════════════
+// FOTO DO USUÁRIO LOGADO (banner)
+// ═══════════════════════════════════════
 async function buscarFotoUsuario() {
   const av = $('h-av');
   // Configurar onclick ANTES de qualquer chamada assíncrona
@@ -342,25 +303,6 @@ async function buscarFotoUsuario() {
   }
 }
 
-  // Gravar log de acesso — silencioso, sem bloquear o app
-  try {
-    const agora = new Date();
-    const dataHora = fD(agora) + ' ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    callScript({
-      acao: 'gravar',
-      aba:  'Log',
-      dados: encodeURIComponent(JSON.stringify([
-        dataHora,
-        S.user.codigo,
-        S.user.nome,
-        S.equipe,
-        S.user.perfil,
-        navigator.userAgent.indexOf('Mobile')>=0 ? 'Celular' : 'Computador'
-      ]))
-    });
-  } catch(e) { console.log('Log acesso:', e); }
-}
-
 function doSair() {
   S.user=null; S.equipe=null; S.loginData=null; S.decSession=[];
   S.cad=[]; S.cadAll=[]; S.eqList=[]; S.cur=null;
@@ -368,6 +310,53 @@ function doSair() {
   $('lbtn').textContent='Verificar acesso'; $('lbtn').onclick=doLogin; $('lerr').style.display='none';
   document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
   $('sc-login').classList.add('on');
+}
+
+// ═══════════════════════════════════════
+// MUDAR SENHA
+// ═══════════════════════════════════════
+function abrirMudarSenha() {
+  $('s-atual').value=''; $('s-nova').value=''; $('s-conf').value='';
+  $('sh-senha').classList.add('on');
+}
+
+async function confirmarMudarSenha() {
+  const atual = $('s-atual').value.trim();
+  const nova  = $('s-nova').value.trim();
+  const conf  = $('s-conf').value.trim();
+  if(!atual){ msg('Informe a senha atual.','er'); return; }
+  if(!nova || nova.length < 4){ msg('Nova senha deve ter ao menos 4 caracteres.','er'); return; }
+  if(nova !== conf){ msg('As senhas não coincidem.','er'); return; }
+  const btn = document.querySelector('#sh-senha .btn-p');
+  if(btn){ btn.disabled=true; btn.textContent='Salvando...'; }
+  load('Salvando...');
+  try {
+    const res = await callScript({
+      acao:      'mudarSenha',
+      matricula: S.user.matricula||S.user.codigo,
+      senhaAtual: atual,
+      novaSenha:  nova
+    });
+    unload();
+    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
+    if(res.erro){ msg(res.erro,'er'); return; }
+    $('sh-senha').classList.remove('on');
+    msg('✅ Senha alterada com sucesso!','ok');
+    // Atualizar cache local de login para não precisar re-logar
+    if(S.loginData){
+      const u = S.loginData.find(r=>r.pin===(S.user.matricula||S.user.codigo));
+      if(u) u.senha = nova;
+    }
+  } catch(e){
+    unload();
+    if(btn){ btn.disabled=false; btn.textContent='💾 Salvar Nova Senha'; }
+    msg('Erro: '+e.message,'er');
+  }
+}
+
+async function resetSenha(matricula) {
+  const res = await callScript({acao: 'resetSenha', matricula: matricula});
+  return res;
 }
 
 // ═══════════════════════════════════════
@@ -777,14 +766,18 @@ function closeNovo(){ $('sh-novo').classList.remove('on'); }
 
 async function salvarNovo(){
   const pin=$('nn-pin').value.trim(),nc=$('nn-nc').value.trim();
-  const ns=$('nn-ns').value.trim(),us=$('nn-us').value.trim();
+  const ns=$('nn-ns').value.trim();
   if(!pin||!nc||!ns){ msg('Preencha os campos obrigatórios.','er'); return; }
   // Validar matrícula duplicada
   load('Verificando matrícula...');
   try {
     const chk = await callScript({acao:'validarMatricula', matricula:pin});
     if(chk.existe){ unload(); msg('Matrícula '+pin+' já cadastrada!','er'); return; }
-  } catch(e){ unload(); }
+  } catch(e){
+    unload();
+    msg('Erro ao verificar matrícula. Tente novamente.','er');
+    return;
+  }
   const id='CP'+pin;
   // Col F = senha padrão = matrícula
   const vals=[id,'',pin,nc,ns,pin,$('nn-sx').value,$('nn-tel').value.trim(),'',
@@ -799,7 +792,7 @@ async function salvarNovo(){
     S.cadAll.push(novo); S.cad.push(novo);
     unload(); closeNovo(); renderCad();
     msg('✅ Membro cadastrado! Senha padrão: '+pin,'ok');
-  }catch(e){unload();msg('Erro: '+e.message,'er');}
+  }catch(e){ unload(); msg('Erro: '+e.message,'er'); }
 }
 
 // ═══════════════════════════════════════
@@ -1301,10 +1294,13 @@ async function registrarIntegracao() {
     return;
   }
   const btn = $('btn-integ-reg');
-  btn.disabled = true; btn.textContent = 'Registrando...';
+  // Alterar apenas o texto interno, sem destruir o innerHTML do botão
+  const btnDiv = btn.querySelector('div:last-child div:first-child');
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  if(btnDiv) btnDiv.textContent = 'Registrando...';
   load('Registrando integração...');
   try {
-    // Gerar ID único
     const idInteg = 'INT' + Date.now().toString(36).toUpperCase();
     await callScript({
       acao:      'gravarIntegracao',
@@ -1315,18 +1311,23 @@ async function registrarIntegracao() {
     unload();
     // Atualizar localmente
     d.integrado = 'Sim';
+    // Restaurar botão com estado "já integrado"
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.background = '#27ae60';
+    if(btnDiv) btnDiv.textContent = 'Já integrado ✓';
     msg('✅ Integração registrada!', 'ok');
-    // Restaurar botão imediatamente
-    btn.disabled = false;
-    btn.textContent = '✅ Registrar Integração';
     // Recarregar lista em background
     loadIntegracao();
     // Ir automaticamente para o próximo pendente do mesmo integrador
     setTimeout(() => proximoInteg(d), 1200);
   } catch(e) {
     unload();
+    // Restaurar botão para estado original em caso de erro
     btn.disabled = false;
-    btn.textContent = '✅ Registrar Integração';
+    btn.style.opacity = '1';
+    btn.style.background = 'var(--navy)';
+    if(btnDiv) btnDiv.textContent = 'Registrar Integração';
     msg('Erro ao registrar: ' + e.message, 'er');
   }
 }
