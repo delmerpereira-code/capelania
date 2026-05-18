@@ -1,8 +1,9 @@
 {
   "name": "Capelania",
   "short_name": "Capelania",
-  "description": "Ministério de Capelania",
-  "start_url": "/",
+  "description": "Ministério de Capelania Nib",
+  "start_url": "/capelania/",
+  "scope": "/capelania/",
   "display": "standalone",
   "background_color": "#0f2744",
   "theme_color": "#0f2744",
