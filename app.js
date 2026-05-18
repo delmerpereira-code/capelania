@@ -1078,7 +1078,6 @@ function renderIntegLista() {
   // Filtro de busca por nome
   const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
   if(busca) lista = lista.filter(d =>
-    (d.nome||'').toLowerCase().indexOf(busca) >= 0 ||
     (d.integrador||'').toLowerCase().indexOf(busca) >= 0 ||
     (d.capelao||'').toLowerCase().indexOf(busca) >= 0
   );
@@ -1311,6 +1310,8 @@ async function registrarIntegracao() {
     unload();
     // Atualizar localmente
     d.integrado = 'Sim';
+    // Atualizar badge na lista imediatamente (sem esperar loadIntegracao)
+    renderIntegLista();
     // Restaurar botão com estado "já integrado"
     btn.disabled = true;
     btn.style.opacity = '0.5';
