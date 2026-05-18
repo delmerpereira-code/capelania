@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════
 // CONFIGURAÇÃO — troque pela URL do seu Apps Script
 // ═══════════════════════════════════════
-const SCRIPT = 'https://script.google.com/macros/s/AKfycbz-47sJIv9EdwLbfDSpKQfW_2qcjQ2I6AiodgpJApklGvOLoNtVZ520sdjb2WvufXJW/exec';
+const SCRIPT = 'https://script.google.com/macros/s/AKfycbxuumkL33xWktoVqKyRD4ru31ilTPZ9ihDu0WecEX-raa91ks3al77mnJQPiqh2usqQ/exec';
 
 // ═══════════════════════════════════════
 // ESTADO GLOBAL
