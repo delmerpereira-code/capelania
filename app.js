@@ -308,27 +308,31 @@ async function validarMatriculaDuplicada(matricula) {
 
 // Buscar foto do usuário logado via Apps Script
 async function buscarFotoUsuario() {
+  const av = $('h-av');
+  // Configurar onclick ANTES de qualquer chamada assíncrona
+  if(av){
+    av.onclick = function(e){ e.stopPropagation(); abrirMudarSenha(); };
+    av.style.cursor = 'pointer';
+    av.title = 'Mudar senha';
+  }
   try {
     const dados = await callScript({acao:'lerFotoUsuario', pin: S.user.matricula||S.user.codigo});
     const foto = dados.foto || '';
-    const av = $('h-av');
     if(av){
       if(foto && foto.indexOf('http')===0){
         const url = converterUrlFoto(foto);
-        // Usar <img> dentro mas manter onclick no div pai
-        av.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"
-          onerror="this.style.display='none';this.parentElement.querySelector('span').style.display='flex'">
-          <span style="display:none;font-size:18px;font-weight:700;width:100%;height:100%;align-items:center;justify-content:center">${ini(S.user.nome)}</span>`;
+        av.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none">`;
       } else {
-        av.innerHTML = `<span style="font-size:18px;font-weight:700">${ini(S.user.nome)}</span>`;
+        av.innerHTML = `<span style="font-size:18px;font-weight:700;pointer-events:none">${ini(S.user.nome)}</span>`;
       }
-      // Garantir que onclick funciona mesmo após trocar innerHTML
+      // Reconfirmar onclick após trocar innerHTML
       av.onclick = function(e){ e.stopPropagation(); abrirMudarSenha(); };
-      av.style.cursor = 'pointer';
     }
   } catch(e) {
-    const av = $('h-av');
-    if(av) av.innerHTML = `<span style="font-size:18px;font-weight:700">${ini(S.user.nome)}</span>`;
+    if(av){
+      av.innerHTML = `<span style="font-size:18px;font-weight:700;pointer-events:none">${ini(S.user.nome)}</span>`;
+      av.onclick = function(e){ e.stopPropagation(); abrirMudarSenha(); };
+    }
   }
 }
 
