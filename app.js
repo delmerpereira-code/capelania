@@ -32,6 +32,9 @@ function msg(m, t) {
 function fD(d) {
   return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
 }
+function normalizeText(str) {
+  return (str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
 function gId() { return Math.random().toString(36).substr(2,8); }
 function ini(n) {
   return (n||'').trim().split(' ').filter(Boolean).slice(0,2).map(x => x[0].toUpperCase()).join('');
@@ -267,6 +270,8 @@ async function confirmarMudarSenha() {
   if(!atual){ msg('Informe a senha atual.','er'); return; }
   if(!nova || nova.length < 4){ msg('Nova senha deve ter ao menos 4 caracteres.','er'); return; }
   if(nova !== conf){ msg('As senhas não coincidem.','er'); return; }
+  const btn = $('sh-senha')?.querySelector('button');
+  if(btn){ btn.disabled = true; btn.textContent = 'Salvando...'; }
   load('Salvando...');
   try {
     const res = await callScript({
@@ -285,6 +290,9 @@ async function confirmarMudarSenha() {
       if(u) u.senha = nova;
     }
   } catch(e){ unload(); msg('Erro: '+e.message,'er'); }
+  finally {
+    if(btn){ btn.disabled = false; btn.textContent = '💾 Salvar Nova Senha'; }
+  }
 }
 async function mudarSenha(senhaAtual, novaSenha) {
   const res = await callScript({
@@ -1077,11 +1085,12 @@ function renderIntegLista() {
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
   // Filtro de busca por nome
-  const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
+  const busca = normalizeText($('i-search') ? $('i-search').value : '');
   if(busca) lista = lista.filter(d =>
-    (d.nome||'').toLowerCase().indexOf(busca) >= 0 ||
-    (d.integrador||'').toLowerCase().indexOf(busca) >= 0 ||
-    (d.capelao||'').toLowerCase().indexOf(busca) >= 0
+    normalizeText(d.nome).indexOf(busca) >= 0 ||
+    normalizeText(d.assistido).indexOf(busca) >= 0 ||
+    normalizeText(d.integrador).indexOf(busca) >= 0 ||
+    normalizeText(d.capelao).indexOf(busca) >= 0
   );
   if(!lista.length){
     const msgTxt = S._integFiltro==='sim' ? 'Nenhum integrado ainda.' : S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
@@ -1295,7 +1304,8 @@ async function registrarIntegracao() {
     return;
   }
   const btn = $('btn-integ-reg');
-  btn.disabled = true; btn.textContent = 'Registrando...';
+  const btnLabel = btn ? btn.querySelector('div:last-child div:first-child') : null;
+  if(btn){ btn.disabled = true; if(btnLabel) btnLabel.textContent = 'Registrando...'; }
   load('Registrando integração...');
   try {
     // Gerar ID único
@@ -1312,12 +1322,23 @@ async function registrarIntegracao() {
     msg('✅ Integração registrada!', 'ok');
     // Recarregar lista em background
     loadIntegracao();
+    // Restaurar botão antes de ir para o próximo
+    if(btn){
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = 'var(--navy)';
+      if(btnLabel) btnLabel.textContent = 'Registrar Integração';
+    }
     // Ir automaticamente para o próximo pendente do mesmo integrador
     setTimeout(() => proximoInteg(d), 1200);
   } catch(e) {
     unload();
-    btn.disabled = false;
-    btn.textContent = '✅ Registrar Integração';
+    if(btn){
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = 'var(--navy)';
+      if(btnLabel) btnLabel.textContent = 'Registrar Integração';
+    }
     msg('Erro ao registrar: ' + e.message, 'er');
   }
 }
@@ -1532,11 +1553,11 @@ async function loadAniv() {
 
 function renderAniv() {
   const ls = $('aniv-lista');
-  const busca = ($('aniv-search')?$('aniv-search').value:'').toLowerCase().trim();
+  const busca = normalizeText($('aniv-search')?$('aniv-search').value:'');
 
   let lista = (S._anivLista||[]).filter(m => {
     if(!m.nome || !m.mes) return false;
-    if(busca && m.nome.toLowerCase().indexOf(busca) < 0) return false;
+    if(busca && normalizeText(m.nome).indexOf(busca) < 0) return false;
     return true;
   });
 
