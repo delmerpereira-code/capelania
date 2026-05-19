@@ -354,7 +354,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
         <div class="tg"><button class="tb" id="d-sim" onclick="setInteg(true)">SIM</button><button class="tb" id="d-nao" onclick="setInteg(false)">NÃO</button></div>
       </div>
       <div id="blk-sim" style="display:none">
-        <div class="f"><label>Telefone *</label><input type="tel" id="d-tel" inputmode="numeric" placeholder="92981286628"></div>
+        <div class="f"><label>Telefone *</label><input type="tel" id="d-tel" inputmode="numeric" placeholder="92981286628" oninput="validarTelInput(this)" disabled style="background:var(--g1)"></div>
         <div class="f"><label>Observações *</label><textarea id="d-obs" rows="3" placeholder="Ex: Sendo tratado por diabetes..."></textarea></div>
       </div>
       <div class="f" id="blk-nao">
