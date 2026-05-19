@@ -261,6 +261,15 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
           <div class="ban-name" id="h-name"></div>
           <div class="ban-eq" id="h-eq"></div>
         </div>
+        <!-- BOTÃO PRESENÇA -->
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <button id="btn-presenca" onclick="registrarPresenca()"
+            style="width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.25);
+                   background:rgba(255,255,255,.1);color:#fff;font-size:22px;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;transition:all .2s"
+            title="Registrar presença">📋</button>
+          <span id="presenca-label" style="font-size:9px;color:rgba(255,255,255,.6);text-align:center;line-height:1.2;max-width:52px"></span>
+        </div>
       </div>
       <div class="ban-chips" style="margin-top:14px">
         <div class="ban-chip"><strong id="h-dv"></strong>Data da visita</div>
