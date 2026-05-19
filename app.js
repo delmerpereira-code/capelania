@@ -610,26 +610,18 @@ function sugerirSexo(nome) {
   const btnM = $('d-btn-mas');
   if(!hint || !btnF || !btnM) return;
   // Se capelão já escolheu manualmente, não sobrescrever
-  if(S.dec.sexo !== null) return;
+  if(S.dec._sexoManual) return;
   const primeiro = (nome||'').trim().split(/\s+/)[0].toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // remover acentos
-  if(!primeiro || primeiro.length < 2){
-    hint.style.display = 'none';
-    return;
-  }
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(!primeiro || primeiro.length < 2) return;
   let sugestao = null;
   if(NOMES_F.has(primeiro)) sugestao = 'F';
   else if(NOMES_M.has(primeiro)) sugestao = 'M';
-  if(!sugestao){ hint.style.display='none'; return; }
-  // Aplicar sugestão visual
+  if(!sugestao) return; // nome não reconhecido — capelão escolhe
+  // Aplicar sugestão
   [btnF, btnM].forEach(b => b.classList.remove('on'));
-  if(sugestao === 'F'){
-    btnF.classList.add('on');
-    S.dec.sexo = 'Feminino';
-  } else {
-    btnM.classList.add('on');
-    S.dec.sexo = 'Masculino';
-  }
+  if(sugestao === 'F'){ btnF.classList.add('on'); S.dec.sexo = 'Feminino'; }
+  else               { btnM.classList.add('on'); S.dec.sexo = 'Masculino'; }
   hint.style.display = 'inline';
 }
 
@@ -637,8 +629,11 @@ function tog(campo, val, btn) {
   S.dec[campo] = val;
   btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  // Ao clicar manualmente no sexo, ocultar hint de sugestão
-  if(campo === 'sexo') { const h=$('d-sx-hint'); if(h) h.style.display='none'; }
+  // Ao clicar manualmente no sexo, travar sugestão automática
+  if(campo === 'sexo') {
+    S.dec._sexoManual = true;
+    const h=$('d-sx-hint'); if(h) h.style.display='none';
+  }
 }
 function setInteg(sim) {
   S.dec.integ = sim;
@@ -1240,7 +1235,7 @@ function resetFormDec() {
   telInput.disabled = true;
   telInput.style.background  = 'var(--g1)';
   telInput.style.borderColor = 'var(--g2)';
-  S.dec = {assistido:null, sexo:null, integ:null};
+  S.dec = {assistido:null, sexo:null, integ:null, _sexoManual:false};
   document.querySelectorAll('#sh-dec .tg').forEach(tg=>{
     tg.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   });
