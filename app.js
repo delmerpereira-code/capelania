@@ -377,6 +377,9 @@ async function loadDecSemana() {
     const dados = await callScript({acao:'lerDecisoesSemana'});
     const lista = dados.values || [];
     $('d-total').textContent = lista.length;
+    // Guardar mapa uid→decisão para editar/excluir
+    S._decMap = {};
+    lista.forEach(d=>{ const uid=(d.linha||'')+'_'+(d.id||''); S._decMap[uid]=d; });
     if(!lista.length){
       ls.innerHTML='<div class="empty"><div class="ei">✝</div><p>Nenhuma decisão esta semana.</p></div>';
       return;
@@ -414,13 +417,13 @@ async function loadDecSemana() {
 }
 
 function openFormDec() {
-  // Reset form
+  // Reset form — sem pré-seleção obrigatória pelo capelão
   ['d-nm','d-tel','d-obs'].forEach(id=>$(id).value=''); $('d-mot').value='';
-  S.dec = {assistido:'Paciente', sexo:'Masculino', integ:false};
+  S.dec = {assistido:null, sexo:null, integ:null};
   document.querySelectorAll('#sh-dec .tg').forEach(tg=>{
-    const bs=tg.querySelectorAll('.tb'); bs.forEach(b=>b.classList.remove('on')); bs[0].classList.add('on');
+    tg.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   });
-  $('d-nao').classList.add('on'); $('d-sim').classList.remove('on');
+  $('d-nao').classList.remove('on'); $('d-sim').classList.remove('on');
   $('blk-sim').style.display='none'; $('blk-nao').style.display='block';
   fillDecInfo();
   $('sh-dec').classList.add('on');
@@ -440,6 +443,10 @@ function setInteg(sim) {
 async function salvarDec() {
   const nm=$('d-nm').value.trim(), tel=$('d-tel').value.trim();
   const integ=S.dec.integ, det=$('d-obs').value.trim(), mot=$('d-mot').value;
+  // Validar campos obrigatórios que antes tinham pré-seleção
+  if(S.dec.assistido===null){ msg('Selecione o tipo de assistido (Paciente ou Visitante).','er'); return; }
+  if(S.dec.sexo===null){ msg('Selecione o sexo do assistido.','er'); return; }
+  if(S.dec.integ===null){ msg('Informe se deseja realizar a integração (SIM ou NÃO).','er'); return; }
   if(!nm){ msg('Informe o nome do assistido.','er'); return; }
   if(integ&&!tel){ msg('Informe o telefone.','er'); return; }
   // Validar telefone — mínimo 10 dígitos, não pode ser só 92
@@ -807,6 +814,9 @@ async function loadDecSemana() {
     const dados = await callScript({acao:'lerDecisoesSemana'});
     const lista = dados.values || [];
     $('d-total').textContent = lista.length;
+    // Guardar mapa uid→decisão para editar/excluir
+    S._decMap = {};
+    lista.forEach(d=>{ const uid=(d.linha||'')+'_'+(d.id||''); S._decMap[uid]=d; });
     if(!lista.length){
       ls.innerHTML='<div class="empty"><div class="ei">✝</div><p>Nenhuma decisão esta semana.<br>Toque + para registrar.</p></div>';
       return;
@@ -828,15 +838,28 @@ async function loadDecSemana() {
         <span class="acc-arr">▾</span>
       </div>
       <div class="acc-body" id="acc-body-${i}">
-        ${grupos[eq].map(d=>`
-          <div class="dec-item">
-            <div class="dec-name">${d.nome}</div>
-            <div class="dec-sub">
-              ${d.assistido} · ${d.sexo||'-'}
-              ${d.tel?'· 📞 '+d.tel:''}
-              · <span class="badge ${d.integ==='S'?'bg-g':'bg-y'}">${d.integ==='S'?'✅ Integrar':'⏭ Não'}</span>
-            </div>
-          </div>`).join('')}
+        ${grupos[eq].map((d,di)=>{
+            const idx = JSON.stringify(S._decListaGrupos||{}).length; // não usado
+            const podeEditar = S.user.perfil==='Líder' ||
+              (d.matriculaCapelao && d.matriculaCapelao===(S.user.matricula||S.user.codigo));
+            const uid = (d.linha||'') + '_' + (d.id||di);
+            return `<div class="dec-item">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div class="dec-name">${d.nome}</div>
+                  <div class="dec-sub">
+                    ${d.assistido} · ${d.sexo||'-'}
+                    ${d.tel?'· 📞 '+d.tel:''}
+                    · <span class="badge ${d.integ==='S'?'bg-g':'bg-y'}">${d.integ==='S'?'✅ Integrar':'⏭ Não'}</span>
+                  </div>
+                </div>
+                ${podeEditar?`<div style="display:flex;gap:6px;flex-shrink:0">
+                  <button onclick="abrirEditDec('${uid}')" style="border:none;background:var(--g2);color:var(--navy);border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer" title="Editar">✏️</button>
+                  <button onclick="confirmarExcluirDec('${uid}')" style="border:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer" title="Excluir">🗑️</button>
+                </div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
       </div>`).join('');
   } catch(e) {
     ls.innerHTML='<div class="empty"><div class="ei">⚠️</div><p>Erro ao carregar decisões.</p></div>';
@@ -852,6 +875,101 @@ function toggleAcc(idx) {
   document.querySelectorAll('.acc-body').forEach(b=>b.classList.remove('on'));
   // Abrir o clicado (se estava fechado)
   if(!isOpen){ hdr.classList.add('on'); body.classList.add('on'); }
+}
+
+// ═══════════════════════════════════════
+// EDITAR / EXCLUIR DECISÃO
+// ═══════════════════════════════════════
+function abrirEditDec(uid) {
+  const d = (S._decMap||{})[uid];
+  if(!d){ msg('Decisão não encontrada.','er'); return; }
+  S._editDecUid = uid;
+  // Preencher campos
+  $('ed-nm').value  = d.nome||'';
+  $('ed-tel').value = d.tel||'';
+  $('ed-obs').value = d.obs||'';
+  // Toggles assistido
+  ['ed-pac','ed-vis'].forEach(id=>$(id).classList.remove('on'));
+  if(d.assistido==='Paciente')  $('ed-pac').classList.add('on');
+  if(d.assistido==='Visitante') $('ed-vis').classList.add('on');
+  // Toggles sexo
+  ['ed-fem','ed-mas'].forEach(id=>$(id).classList.remove('on'));
+  if((d.sexo||'').toUpperCase()==='F'||(d.sexo||'')==='Feminino')  $('ed-fem').classList.add('on');
+  if((d.sexo||'').toUpperCase()==='M'||(d.sexo||'')==='Masculino') $('ed-mas').classList.add('on');
+  // Toggle integração
+  $('ed-sim').classList.toggle('on', d.integ==='S');
+  $('ed-nao').classList.toggle('on', d.integ==='N');
+  S._editDec = Object.assign({}, d, {
+    assistido: d.assistido||'Paciente',
+    sexo: (d.sexo||'').toUpperCase()==='F'?'Feminino':'Masculino',
+    integ: d.integ==='S'
+  });
+  $('sh-edit-dec').classList.add('on');
+}
+
+function togEdit(campo, val, btn) {
+  S._editDec[campo] = val;
+  btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function setIntegEdit(sim) {
+  S._editDec.integ = sim;
+  $('ed-sim').classList.toggle('on', sim);
+  $('ed-nao').classList.toggle('on', !sim);
+}
+
+async function salvarEditDec() {
+  const d = S._editDec;
+  if(!d){ msg('Nenhuma decisão selecionada.','er'); return; }
+  const nm  = $('ed-nm').value.trim();
+  const tel = $('ed-tel').value.trim();
+  const obs = $('ed-obs').value.trim();
+  if(!nm){ msg('Informe o nome do assistido.','er'); return; }
+  if(d.integ && !tel){ msg('Informe o telefone.','er'); return; }
+  // Reconstruir linha completa — mesma ordem das colunas da planilha
+  const orig = (S._decMap||{})[S._editDecUid];
+  const vals = [
+    orig.id||'',        // A = ID
+    orig.data||'',      // B = CarimboData
+    orig.matriculaCapelao||'', // C = MatCapelao
+    orig.capelao||'',   // D = NomeCapelao
+    orig.equipe||'',    // E = Equipe
+    orig.dataVisita||'',// F = DataVisita
+    d.assistido,        // G = TipoAssistido
+    nm,                 // H = NomeAssistido
+    d.sexo==='Feminino'?'F':'M', // I = Sexo
+    tel,                // J = Tel
+    d.integ?'S':'N',    // K = Integrar
+    d.integ?'':($('ed-mot')?$('ed-mot').value:''), // L = MotivoNao
+    obs,                // M = Obs
+    orig.semana||''     // N = Semana
+  ];
+  load('Salvando...');
+  try {
+    await callScript({
+      acao:  'editarDecisao',
+      linha: orig.linha,
+      dados: encodeURIComponent(JSON.stringify(vals))
+    });
+    unload();
+    $('sh-edit-dec').classList.remove('on');
+    msg('✅ Decisão atualizada!','ok');
+    loadDecSemana();
+  } catch(e){ unload(); msg('Erro: '+e.message,'er'); }
+}
+
+async function confirmarExcluirDec(uid) {
+  const d = (S._decMap||{})[uid];
+  if(!d){ msg('Decisão não encontrada.','er'); return; }
+  if(!confirm('Excluir a decisão de "'+d.nome+'"? Esta ação não pode ser desfeita.')){ return; }
+  load('Excluindo...');
+  try {
+    await callScript({acao:'excluirDecisao', linha: d.linha});
+    unload();
+    msg('✅ Decisão excluída.','ok');
+    loadDecSemana();
+  } catch(e){ unload(); msg('Erro: '+e.message,'er'); }
 }
 
 // ═══════════════════════════════════════
@@ -875,13 +993,11 @@ function fecharFormDec() {
 function resetFormDec() {
   ['d-nm','d-tel','d-obs'].forEach(id=>$(id).value='');
   $('d-mot').value='';
-  S.dec = {assistido:'Paciente', sexo:'Masculino', integ:false};
+  S.dec = {assistido:null, sexo:null, integ:null};
   document.querySelectorAll('#sh-dec .tg').forEach(tg=>{
-    const bs=tg.querySelectorAll('.tb');
-    bs.forEach(b=>b.classList.remove('on'));
-    bs[0].classList.add('on');
+    tg.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   });
-  $('d-nao').classList.add('on'); $('d-sim').classList.remove('on');
+  $('d-nao').classList.remove('on'); $('d-sim').classList.remove('on');
   $('blk-sim').style.display='none'; $('blk-nao').style.display='block';
 }
 
@@ -1122,7 +1238,7 @@ function renderIntegLista() {
     return `<div class="acc-hdr" id="iacc-hdr-${i}" onclick="toggleIAcc(${i})">
         <div class="acc-hdr-left">
           <span style="font-size:16px">👤</span>
-          <span class="acc-hdr-eq">${cp}</span>
+          <span class="acc-hdr-eq" style="font-size:17px;font-weight:700">${cp}</span>
           <span class="acc-cnt">${grupos[cp].length}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
