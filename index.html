@@ -346,10 +346,14 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
       <div class="f"><label>Assistido *</label>
         <div class="tg"><button class="tb" onclick="tog('assistido','Paciente',this)">Paciente</button><button class="tb" onclick="tog('assistido','Visitante',this)">Visitante</button></div>
       </div>
-      <div class="f"><label>Sexo *</label>
-        <div class="tg"><button class="tb" onclick="tog('sexo','Feminino',this)">Feminino</button><button class="tb" onclick="tog('sexo','Masculino',this)">Masculino</button></div>
+      <div class="f">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="margin:0">Sexo *</label>
+          <span id="d-sx-hint" style="font-size:11px;color:var(--g5);font-style:italic;display:none">✨ Sugerido pelo nome</span>
+        </div>
+        <div class="tg"><button class="tb" id="d-btn-fem" onclick="tog('sexo','Feminino',this)">Feminino</button><button class="tb" id="d-btn-mas" onclick="tog('sexo','Masculino',this)">Masculino</button></div>
       </div>
-      <div class="f"><label>Nome do Assistido *</label><input type="text" id="d-nm" placeholder="Nome completo" autocomplete="off"></div>
+      <div class="f"><label>Nome do Assistido *</label><input type="text" id="d-nm" placeholder="Nome completo" autocomplete="off" oninput="sugerirSexo(this.value)"></div>
       <div class="f"><label>Realizar Integração? *</label>
         <div class="tg"><button class="tb" id="d-sim" onclick="setInteg(true)">SIM</button><button class="tb" id="d-nao" onclick="setInteg(false)">NÃO</button></div>
       </div>
