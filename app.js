@@ -251,6 +251,7 @@ function startSession() {
 
   // Buscar foto do usuário logado
   buscarFotoUsuario();
+  verificarPresencaHoje();
 
   // Gravar log de acesso — silencioso, sem bloquear o app
   try {
@@ -300,6 +301,88 @@ async function buscarFotoUsuario() {
       av.innerHTML = `<span style="font-size:18px;font-weight:700;pointer-events:none">${ini(S.user.nome)}</span>`;
       av.onclick = function(e){ e.stopPropagation(); abrirMudarSenha(); };
     }
+  }
+}
+
+
+// ═══════════════════════════════════════
+// PRESENÇA
+// ═══════════════════════════════════════
+async function verificarPresencaHoje() {
+  const btn   = $('btn-presenca');
+  const label = $('presenca-label');
+  if(!btn || !label) return;
+  try {
+    const hoje = fD(new Date()); // dd/mm/aaaa
+    const res  = await callScript({ acao:'verificarPresenca', matricula: S.user.matricula||S.user.codigo, data: hoje });
+    if(res.registrado){
+      // Já registrou hoje — mostrar horário
+      _setPresencaRegistrada(res.hora);
+    } else {
+      // Ainda não registrou — botão ativo
+      btn.disabled = false;
+      btn.style.background = 'rgba(255,255,255,.1)';
+      btn.style.border     = '2px solid rgba(255,255,255,.25)';
+      btn.textContent      = '📋';
+      btn.title            = 'Registrar presença';
+      label.textContent    = 'Presença';
+    }
+  } catch(e) {
+    // Sem resposta — deixar botão ativo para tentar registrar
+    btn.disabled      = false;
+    btn.textContent   = '📋';
+    label.textContent = 'Presença';
+  }
+}
+
+function _setPresencaRegistrada(hora) {
+  const btn   = $('btn-presenca');
+  const label = $('presenca-label');
+  if(!btn || !label) return;
+  btn.disabled         = true;
+  btn.style.background = 'rgba(39,174,96,.35)';
+  btn.style.border     = '2px solid rgba(39,174,96,.7)';
+  btn.style.cursor     = 'default';
+  btn.textContent      = '✅';
+  btn.title            = 'Presença já registrada';
+  label.textContent    = hora ? 'às '+hora : 'Registrado';
+}
+
+async function registrarPresenca() {
+  const btn   = $('btn-presenca');
+  const label = $('presenca-label');
+  if(!btn || btn.disabled) return;
+  btn.disabled      = true;
+  btn.textContent   = '⏳';
+  label.textContent = 'Salvando...';
+  try {
+    const agora    = new Date();
+    const data     = fD(agora);
+    const hora     = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const diaSem   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][agora.getDay()];
+    const res = await callScript({
+      acao:      'gravarPresenca',
+      data:      data,
+      hora:      hora,
+      matricula: S.user.matricula||S.user.codigo,
+      nome:      S.user.nome||'',
+      equipe:    S.equipe||'',
+      hospital:  S.user.hospital||S.equipe||'',
+      diaSem:    diaSem
+    });
+    if(res.erro){
+      // Duplicata detectada no servidor
+      _setPresencaRegistrada(res.hora);
+      msg('Presença já registrada hoje às '+res.hora,'ok');
+    } else {
+      _setPresencaRegistrada(hora);
+      msg('✅ Presença registrada às '+hora,'ok');
+    }
+  } catch(e) {
+    btn.disabled      = false;
+    btn.textContent   = '📋';
+    label.textContent = 'Presença';
+    msg('Erro ao registrar presença: '+e.message,'er');
   }
 }
 
