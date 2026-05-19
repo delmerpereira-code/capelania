@@ -428,10 +428,217 @@ function openFormDec() {
   fillDecInfo();
   $('sh-dec').classList.add('on');
 }
+// ═══════════════════════════════════════
+// SUGESTÃO DE SEXO PELO NOME
+// ═══════════════════════════════════════
+const NOMES_F = new Set([
+  'ana','maria','jose','josélia','josefa','francisca','antonia','adriana','juliana','marcia',
+  'fernanda','patricia','aline','sandra','camila','amanda','bruna','larissa','leticia','luciana',
+  'daniela','claudia','cristina','andrea','fatima','aparecida','rosana','rosangela','jessica',
+  'vanessa','priscila','simone','renata','fabiana','gabriela','beatriz','natalia','roberta',
+  'alice','paula','carolina','rita','elaine','debora','viviane','monica','sueli','sonia',
+  'regiane','gisele','tatiane','cintia','elisangela','silvia','vera','sueli','isabel','irene',
+  'luana','rafaela','isabela','vitoria','giovanna','bianca','valentina','sarah','julia','laura',
+  'livia','mariana','nathalia','thais','thaisa','thaiane','taiane','taiane','lara','heloisa',
+  'luisa','luiza','ester','esther','ruth','rebeca','raquel','miriam','noemia','debora',
+  'sulamita','abigail','elisabete','elizabete','tereza','teresa','ivone','iara','iolanda',
+  'iracema','iraci','irma','ivana','ivete','jacqueline','jaqueline','janaina','janete',
+  'josiane','josiely','josilene','joyce','judith','kelly','leilane','leila','leonora','ligia',
+  'lindomar','lourdes','luciene','lucilene','lucimara','lucineia','lucinara','luzia','madalena',
+  'magda','maira','maisa','marcelina','marcia','margarete','margareth','marilia','marina',
+  'maristela','marlene','marta','meire','milena','mirela','nadia','nelma','neuza','nilza',
+  'noely','norma','odete','olivia','orlanda','palmira','penelope','poliana','queila','quenia',
+  'rachel','raissa','regiane','regilane','roseli','rosemeire','rosilda','rosilene','rosilei',
+  'samara','samira','selma','shirley','silvana','soraya','suenia','susana','suzana','tania',
+  'tatiana','telma','valdirene','valeria','valquiria','vania','vilma','wanessa','wanderlea',
+  'yara','yasmin','yasmine','zelia','zeneide','zenaide','zilda','zuila','zuileide',
+  // nomes menos comuns mas presentes
+  'edna','edinalva','edineia','edinara','edineide','edwiges','elida','eliene','eliete',
+  'elisa','elisia','elissandra','elizia','eliziane','elza','emilia','enilda','ercilia',
+  'ericka','erika','erlane','eucilene','eunice','evandra','eveline','evelyn','fabiola',
+  'flavia','flor','florencia','floripes','franciele','francieli','francilene','francisca',
+  'geisa','geisiane','geovana','geovanna','gilmara','giselia','gislaine','glacilene',
+  'gleice','gleiciane','glenia','gloria','graciele','gracieli','graziela','graziella',
+  'helena','helia','hildre','hilda','idalina','idalva','idatiane','ines','ingrid',
+  'ioneide','ionice','iranice','iranildes','iranilde','irani','iranete','iraneide',
+  'irineia','islane','islania','islene','ivana','ivanir','ivanilde','ivanildes',
+  'jandira','jandir','jaqueline','jenifer','jennifer','jocelia','joceliane','joelma',
+  'joenia','joice','jonilda','jordana','jucelia','judite','jussara','karina','karla',
+  'katia','katiane','katieli','keila','keily','leia','leide','leidiane','leila','lena',
+  'leonice','leonilda','lessandra','letice','licia','lidiane','lidiane','liene','lisandra',
+  'lisiane','lissandra','lorena','lourdes','lucelia','lucenildes','luciana','luciene',
+  'lucimare','lucinara','lucivanda','luene','lurdes','lygia','maeli','maely','magali',
+  'magnolia','maiara','maiane','maiane','maiele','mailane','mailene','mailze','mainá',
+  'maisa','maisinha','malvina','manuela','mara','maraisa','maraiza','marcela','marcelia',
+  'marcelina','marcelinda','marcilene','marciley','margarida','mari','mariangela',
+  'maricleia','mariel','mariele','mariely','marieta','marilac','marilene','marilice',
+  'marilsa','mariluze','marilza','marilze','marinalva','marinara','marinete','marineuza',
+  'marinildes','marinilde','marinilza','mariza','marlei','marluce','marlucia','marluze',
+  'marly','marolia','marsia','marycleide','meiry','melania','melissa','mercia','merice',
+  'meriele','mikaela','mikele','milene','milla','mirela','mirian','miriã','naiara',
+  'nailza','naira','nairana','nairobi','nanci','nanci','nara','narcisa','natali',
+  'natalice','natalina','nataniele','nathalia','nelia','nelice','nelinda','nelita',
+  'nelma','nely','neusa','nilceia','nilcemara','nildete','nildinha','nilmar','nilmara',
+  'nilsa','nilza','nirce','nirce','nirlei','nirlene','nirmalva','nizia','noemi',
+  'norma','odelia','odenise','odete','odineia','odineide','oleide','oleisa','olenaide',
+  'olenice','olinda','olimpia','olinda','onilda','onilza','orilda','orivalda','osnilda',
+  'ozana','ozelia','paola','patricia','pricila','priscila','rafaele','raiane','raíssa',
+  'ramona','rania','raniely','raquelzinha','rasilda','rayane','rayne','rayssa','rene',
+  'renilda','renice','renilda','rilda','rilma','rita','roberla','roberta','rocilda',
+  'ronilda','rosali','rosalia','rosaline','rosalva','rosana','rosangela','rosaria',
+  'roseleide','roseli','roselinda','roselita','roselma','rosely','rosemara','rosemeire',
+  'rosemira','rosena','rosenilda','rosilei','rosilene','rosimar','rosinalda','rosinei',
+  'rosinete','rosinilda','rosivalda','rosivania','rosivane','rosivania','rosivânia',
+  'rossana','roxana','rozana','rozangela','rozelia','sabrina','salomé','samela','samile',
+  'samires','samylle','sania','sarita','sarlete','selmara','senia','sergia','sidcley',
+  'sidcleia','sidineia','sidneide','sidineia','sidneia','sidneia','silair','silaine',
+  'silamara','silane','silara','sileia','silene','silenilde','sileuza','silmara','silmares',
+  'silvia','silvana','simara','simare','simarize','simeia','simiele','simone','sinara',
+  'sineide','sineia','sineta','sirlandia','sirley','sirlei','sirlene','sirlecia',
+  'solange','soleni','solenice','solenira','solenice','sonali','sonia','sueli','suenia',
+  'suiane','suilane','sulamita','sulane','sulenir','sylene','taina','tainara','tainã',
+  'talita','tamara','tamires','tamyris','tania','tanila','tanise','tanis','tarsila',
+  'tassia','tassiana','tassiele','tatyane','tecia','teila','telma','terezinha','tercia',
+  'tiara','tirzah','toninha','tuana','tuane','ubiraci','udiane','udiara','ueslane',
+  'uliane','uliana','uliara','ully','ursula','ursulina','valdenia','valdenira',
+  'valdenice','valdineia','valdineia','valdinete','valdirene','valentina','valeria',
+  'valesca','valeska','valkiria','valnice','valnir','vanderleia','vanderlene','vanessa',
+  'vania','vanilda','vanilce','vanildes','vanilde','vanilza','vanilze','vanusa',
+  'vanuza','vasilica','vera','veridiana','veridiane','veronica','vilani','vilania',
+  'vilene','vilma','virgínia','virginia','viviane','viviani','wagna','waleska',
+  'walkiria','wanda','wanderlea','wanessa','wellington','wilza','xenia','yasmim',
+  'yasmin','yolanda','yolandia','zaira','zelma','zeneide','zenaide','zilda','zuila'
+]);
+
+const NOMES_M = new Set([
+  'jose','joao','antonio','francisco','carlos','paulo','pedro','lucas','luiz','marcos',
+  'luis','gabriel','rafael','daniel','marcelo','bruno','eduardo','felipe','raimundo',
+  'rodrigo','manoel','manuel','nelson','fernando','anderson','andre','leandro','leonardo',
+  'alexandro','alexandre','alex','alan','alan','ailton','ailton','ademir','adilson',
+  'adilson','adimilson','adimir','adonis','adriano','afonso','agostinho','ailton',
+  'airton','alailson','alan','alberito','alberto','albi','alcides','aldo','aldrin',
+  'alecio','alecsandro','alecxandro','alef','aleilson','aleixo','alelson','alencar',
+  'alender','alenis','alenquar','alenquer','alequison','alesandro','aleson','alex',
+  'alexis','alexsander','alexsandro','alfredo','alicio','alinton','alisson','alister',
+  'alistor','almir','aloisio','altair','altemir','altemiro','alton','alvaro','alves',
+  'alves','alvinton','amaro','amauris','amauri','amaury','americo','amilcar','amilton',
+  'aminadabe','amintas','amir','amisson','anderson','anilton','anisio','antonio',
+  'aparecido','aquiles','aquino','arcenio','ardilson','argemiro','ariel','arlindo',
+  'armenio','arnaldo','arnaldo','arno','aroldino','arquimedes','artur','arthur',
+  'augusto','aurelio','aurisvaldo','avelino','azael','bartolomeu','belmiro','benedito',
+  'benjamim','bento','bernardo','caio','calebe','calisto','camilo','caue','celio',
+  'celso','cezar','charles','cicero','claudio','cleber','cleiton','cleidimar',
+  'cleidson','cleimar','cleinton','cleison','clemente','cleumar','cleuton','clevis',
+  'clezio','clodoaldo','cloves','clovis','crisanto','cristiano','cristovao','dario',
+  'davi','david','demilson','demisson','demivaldo','denilson','denis','denison',
+  'deomar','deovaldo','deraldo','dercio','derlan','derley','derlei','derson','deusdete',
+  'deusilmar','deusmario','deusnilton','deusnei','deusmar','diassis','diego','diogo',
+  'diovane','dirceu','domingos','donizete','dorival','douglas','durval','edgar',
+  'edgard','edmilson','edmir','edivaldo','edivar','edilson','edilberto','edilan',
+  'ediles','edilmar','edimilson','edimir','edinaldo','edinalvo','edinei','edinho',
+  'edivaldo','edivam','edivar','edivandro','edmar','edmilson','edmundo','edner',
+  'ednilson','ednildo','ednil','ednaldo','edoardo','eduardo','edvaldo','edvan',
+  'edvandro','edvison','edwaldo','edward','edwaldo','egidio','elano','elber','elias',
+  'elielson','eliezer','elinilton','elinton','elio','elionaldo','elionardo','eliomar',
+  'elisan','eliseu','elisson','elivaldo','elomar','elpidio','elson','elton','elvano',
+  'elves','elvino','elvio','emerson','emilio','enock','enoque','erico','eron','eroni',
+  'eroni','eroni','eroni','ervan','erves','ervis','estevao','ethan','etienne','euler',
+  'evaldo','evan','evandro','everton','ezequiel','ezequias','fabiano','fabio','fabricio',
+  'fagner','fagner','falco','fausto','felix','fidelis','filipe','filho','flavio',
+  'floriano','francielson','francinaldo','francismar','franks','fredi','frederico',
+  'gabriel','geandro','geison','gelson','gerson','gilberto','gildemar','gildeval',
+  'gildezio','gildo','gilmar','gilson','gilvan','gilvanio','gilvandro','giordano',
+  'giovani','giovanni','giraldo','gleidson','gleison','glenio','gleyson','glicio',
+  'gomes','graciano','gregorio','guilherme','gustavo','hamilton','heitor','helcio',
+  'helder','henrique','hercules','herique','herton','herve','hilario','hilton','hiram',
+  'homero','horacio','hudson','humberto','igor','ilton','irineu','isaias','ismael',
+  'israel','italo','ivan','ivanildo','ivanilson','ivanio','ivar','ivo','ivonaldo',
+  'jacob','jadilson','jaime','jailson','jairo','jaldimar','jales','jamerson','james',
+  'jamilson','janio','jardel','jardel','jarlison','jarvis','jeferson','jefferson',
+  'jerlan','jeronimo','jetro','jilvan','jilvanio','jilsomar','jilson','joel','jonatas',
+  'jonas','jonathan','jorgemar','jorginho','joseildo','joseilson','joselito','josias',
+  'josiel','josiel','josier','josivan','josivaldo','jovito','juarez','juan','julinho',
+  'junio','junior','juvenal','kelvin','kesley','kessler','kevin','kleber','kleison',
+  'klenio','kleyson','lailson','lailton','laion','laisson','lander','landro','lauro',
+  'lavinio','lazaro','leandro','leidimar','leilton','lenilson','lenildo','lenio',
+  'lenison','leocadio','leonaldo','leonel','leonidas','leonildo','leonilson','leovaldo',
+  'leron','levin','lewis','lino','lionel','liston','lourival','luanderson','luciano',
+  'lucielson','lucimar','lucio','luis','luiz','luizinho','lutero','macario','mailson',
+  'mairton','manes','manoel','marcelino','marcilio','marcio','marcos','marinho',
+  'mario','marius','marlon','marlon','maro','marrony','mateus','mathias','matias',
+  'mauricio','mauro','maylon','maycon','maykel','maykon','maylon','mayron','messias',
+  'michael','michell','michel','miguel','mikael','miqueias','moises','mozart',
+  'murilo','napoleon','natan','natanael','nathanael','neil','nelson','nemias',
+  'nerivaldo','nestor','newton','nilmar','nilton','noel','noilton','norival','obed',
+  'obede','ocimar','odair','odenilson','odinaldo','odinei','odivaldo','odilon',
+  'oldair','olimar','olimpio','olimpio','oliveiro','olivo','olmir','omar','onivaldo',
+  'oraldo','orlando','ormindo','oromar','orson','oscar','osmaildo','osmanar','osmar',
+  'osorio','osvaldo','otavio','pablo','palmiro','pamphilo','paris','pascoal','patricio',
+  'paulo','persio','phillipe','pierre','plinio','poliano','pontes','pricles','rafael',
+  'railson','raimundo','raldimar','ramiro','ramonilson','ranison','raniery','ranildo',
+  'ranito','raquilson','raul','raylson','rayan','raynaldo','raymundo','reginaldo',
+  'reinaldo','reinaldo','renan','renato','rene','renildo','renilson','renivaldo',
+  'rerivelton','ribamar','ricardo','rildomar','rilton','rinaldo','ritson','rivaldo',
+  'roan','robson','rodrigo','rogelio','rogerio','rogildo','roginson','romagnole',
+  'roman','romario','romar','romildo','romilson','rommel','ronaldo','ronieldo',
+  'roniery','roniery','ronildo','ronivaldo','rono','roquelino','roquilson','rosenaldo',
+  'rosialdo','rosivaldo','rotsen','rubem','rubens','rufino','ruimar','ruy','salatiel',
+  'saldino','salomao','salustiano','samoel','samuel','sandoval','sandro','sanilson',
+  'sansao','santino','saulo','sebastiao','selmo','sergio','servilio','sidcley',
+  'sidclio','sidclei','sidelmar','sideral','sideralvo','sideraldo','sidilmar',
+  'sidmar','sidinaldo','sidnei','sidney','sigmar','silvano','silverio','silvino',
+  'silvio','simao','sinivaldo','siomar','sirlan','sirley','sirlei','sirlei',
+  'solon','stenio','tarcisio','thadeu','thiago','tiago','timoteo','tobias','toninho',
+  'uanderlei','uanderson','ubaldino','ubirajara','ubiraci','ubiratan','ulisses',
+  'valdemar','valdenir','valdenilson','valdenildo','valderildo','valdivino','valdir',
+  'valdo','valerio','vanderlei','vanderlino','vanderson','vanildo','vanilson',
+  'vanilmar','vanilmar','vany','varley','vasco','vespasiano','victor','vidal',
+  'vilmar','vilson','vinicius','virgilio','vitorio','vitor','wagner','walderlei',
+  'waldemar','waldenor','waldir','waldomiro','walison','wallison','walmir','walney',
+  'waltercio','waltemar','waltenildo','walter','wanderlei','wanderlino','wanderson',
+  'waneison','warlei','warley','washington','weder','weldimar','welison','weliton',
+  'wellington','wemerson','wendel','wendell','wenefrido','werley','wermerson',
+  'weslei','wesler','wesley','weverton','wilanio','wilanildo','wilanir','wilian',
+  'wilimar','wilker','willian','william','willieldo','wilsimar','wilson','wiltercio',
+  'winaldo','wladimir','wolmar','xisto','yago','yuri','zacarias','zaqueu','zelino',
+  'zelito','zenobio','zeomar','zileido','zilmar','zoroastro'
+]);
+
+function sugerirSexo(nome) {
+  const hint = $('d-sx-hint');
+  const btnF = $('d-btn-fem');
+  const btnM = $('d-btn-mas');
+  if(!hint || !btnF || !btnM) return;
+  // Se capelão já escolheu manualmente, não sobrescrever
+  if(S.dec.sexo !== null) return;
+  const primeiro = (nome||'').trim().split(/\s+/)[0].toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,''); // remover acentos
+  if(!primeiro || primeiro.length < 2){
+    hint.style.display = 'none';
+    return;
+  }
+  let sugestao = null;
+  if(NOMES_F.has(primeiro)) sugestao = 'F';
+  else if(NOMES_M.has(primeiro)) sugestao = 'M';
+  if(!sugestao){ hint.style.display='none'; return; }
+  // Aplicar sugestão visual
+  [btnF, btnM].forEach(b => b.classList.remove('on'));
+  if(sugestao === 'F'){
+    btnF.classList.add('on');
+    S.dec.sexo = 'Feminino';
+  } else {
+    btnM.classList.add('on');
+    S.dec.sexo = 'Masculino';
+  }
+  hint.style.display = 'inline';
+}
+
 function tog(campo, val, btn) {
   S.dec[campo] = val;
   btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  // Ao clicar manualmente no sexo, ocultar hint de sugestão
+  if(campo === 'sexo') { const h=$('d-sx-hint'); if(h) h.style.display='none'; }
 }
 function setInteg(sim) {
   S.dec.integ = sim;
@@ -1039,6 +1246,9 @@ function resetFormDec() {
   });
   $('d-nao').classList.remove('on'); $('d-sim').classList.remove('on');
   $('blk-sim').style.display='none'; $('blk-nao').style.display='block';
+  // Limpar hint de sugestão de sexo
+  const hint = $('d-sx-hint');
+  if(hint) hint.style.display = 'none';
 }
 
 function renderSessao() {
