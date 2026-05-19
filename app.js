@@ -612,7 +612,7 @@ function sugerirSexo(nome) {
   // Se capelão já escolheu manualmente, não sobrescrever
   if(S.dec.sexo !== null) return;
   const primeiro = (nome||'').trim().split(/\s+/)[0].toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g,''); // remover acentos
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // remover acentos
   if(!primeiro || primeiro.length < 2){
     hint.style.display = 'none';
     return;
