@@ -220,6 +220,13 @@ async function doLogin() {
   };
 }
 
+function resolverHospital() {
+  // Busca o hospital (col C) correspondente à equipe atual no eqList
+  if(!S.eqList || !S.eqList.length) return S.equipe||'';
+  const eq = S.eqList.find(e => (e.nome||e) === S.equipe);
+  return (eq && eq.hospital) ? eq.hospital : S.equipe||'';
+}
+
 function startSession() {
   const h = new Date(), sw = getSemana(), dv = calcDv(S.equipe||'');
   S.dv = dv;
@@ -367,7 +374,7 @@ async function registrarPresenca() {
       matricula: S.user.matricula||S.user.codigo,
       nome:      encodeURIComponent(S.user.nome||''),
       equipe:    encodeURIComponent(S.equipe||''),
-      hospital:  encodeURIComponent(S.user.hospital||S.equipe||''),
+      hospital:  encodeURIComponent(resolverHospital()||S.equipe||''),
       diaSem:    encodeURIComponent(diaSem)
     });
     const resErro = res && res.erro;
@@ -1053,10 +1060,11 @@ function renderEqList(selecionadas){
   if(!S.eqList.length){ el.innerHTML='<div style="color:var(--g4);padding:12px">Nenhuma equipe disponível.</div>'; return; }
   el.innerHTML='';
   S.eqList.forEach(eq=>{
+    const nome = eq.nome||eq; // compatível com string ou objeto
     const item=document.createElement('div');
-    item.className='eq-item'+(sel.indexOf(eq)>=0?' on':'');
-    item.dataset.eq=eq;
-    item.innerHTML=`<div class="eq-box">${sel.indexOf(eq)>=0?'✓':''}</div><div class="eq-lbl">${eq}</div>`;
+    item.className='eq-item'+(sel.indexOf(nome)>=0?' on':'');
+    item.dataset.eq=nome;
+    item.innerHTML=`<div class="eq-box">${sel.indexOf(nome)>=0?'✓':''}</div><div class="eq-lbl">${nome}</div>`;
     item.onclick=()=>{
       item.classList.toggle('on');
       const box=item.querySelector('.eq-box');
