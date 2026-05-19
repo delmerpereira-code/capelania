@@ -353,7 +353,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
         </div>
         <div class="tg"><button class="tb" id="d-btn-fem" onclick="tog('sexo','Feminino',this)">Feminino</button><button class="tb" id="d-btn-mas" onclick="tog('sexo','Masculino',this)">Masculino</button></div>
       </div>
-      <div class="f"><label>Nome do Assistido *</label><input type="text" id="d-nm" placeholder="Nome completo" autocomplete="off" oninput="sugerirSexo(this.value)"></div>
+      <div class="f"><label>Nome do Assistido *</label><input type="text" id="d-nm" placeholder="Nome completo" autocomplete="off" onblur="sugerirSexo(this.value)"></div>
       <div class="f"><label>Realizar Integração? *</label>
         <div class="tg"><button class="tb" id="d-sim" onclick="setInteg(true)">SIM</button><button class="tb" id="d-nao" onclick="setInteg(false)">NÃO</button></div>
       </div>
