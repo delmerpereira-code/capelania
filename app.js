@@ -370,10 +370,16 @@ async function registrarPresenca() {
       hospital:  S.user.hospital||S.equipe||'',
       diaSem:    diaSem
     });
-    if(res.erro){
-      // Duplicata detectada no servidor
+    if(res.erro === 'duplicata'){
+      // Duplicata confirmada — mostrar horário anterior
       _setPresencaRegistrada(res.hora);
       msg('Presença já registrada hoje às '+res.hora,'ok');
+    } else if(res.erro){
+      // Erro genérico do servidor — restaurar botão
+      btn.disabled      = false;
+      btn.textContent   = '📋';
+      label.textContent = 'Presença';
+      msg('Erro: '+res.erro,'er');
     } else {
       _setPresencaRegistrada(hora);
       msg('✅ Presença registrada às '+hora,'ok');
