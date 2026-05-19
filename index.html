@@ -304,6 +304,32 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 </div>
 
 <!-- DECISÕES FORMULÁRIO (sheet) -->
+<!-- EDITAR DECISÃO -->
+<div class="shov" id="sh-edit-dec">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px">
+      <div class="sh-title" style="padding:0">Editar Decisão</div>
+      <button onclick="$('sh-edit-dec').classList.remove('on')" style="width:36px;height:36px;border-radius:50%;border:none;background:var(--g2);color:var(--g6);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:16px">
+      <div class="f"><label>Assistido *</label>
+        <div class="tg"><button class="tb" id="ed-pac" onclick="togEdit('assistido','Paciente',this)">Paciente</button><button class="tb" id="ed-vis" onclick="togEdit('assistido','Visitante',this)">Visitante</button></div>
+      </div>
+      <div class="f"><label>Sexo *</label>
+        <div class="tg"><button class="tb" id="ed-fem" onclick="togEdit('sexo','Feminino',this)">Feminino</button><button class="tb" id="ed-mas" onclick="togEdit('sexo','Masculino',this)">Masculino</button></div>
+      </div>
+      <div class="f"><label>Nome do Assistido *</label><input type="text" id="ed-nm" placeholder="Nome completo"></div>
+      <div class="f"><label>Realizar Integração? *</label>
+        <div class="tg"><button class="tb" id="ed-sim" onclick="setIntegEdit(true)">SIM</button><button class="tb" id="ed-nao" onclick="setIntegEdit(false)">NÃO</button></div>
+      </div>
+      <div class="f"><label>Telefone</label><input type="tel" id="ed-tel" placeholder="92981286628"></div>
+      <div class="f"><label>Observações</label><textarea id="ed-obs" rows="3" placeholder="Observações..."></textarea></div>
+      <button class="btn btn-p" onclick="salvarEditDec()" style="margin-bottom:16px">💾 Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <div class="shov" id="sh-dec">
   <div class="sh">
     <div class="sh-bar"></div>
