@@ -365,24 +365,31 @@ async function registrarPresenca() {
       data:      data,
       hora:      hora,
       matricula: S.user.matricula||S.user.codigo,
-      nome:      S.user.nome||'',
-      equipe:    S.equipe||'',
-      hospital:  S.user.hospital||S.equipe||'',
-      diaSem:    diaSem
+      nome:      encodeURIComponent(S.user.nome||''),
+      equipe:    encodeURIComponent(S.equipe||''),
+      hospital:  encodeURIComponent(S.user.hospital||S.equipe||''),
+      diaSem:    encodeURIComponent(diaSem)
     });
-    if(res.erro === 'duplicata'){
+    const resErro = res && res.erro;
+    if(resErro === 'duplicata'){
       // Duplicata confirmada — mostrar horário anterior
       _setPresencaRegistrada(res.hora);
       msg('Presença já registrada hoje às '+res.hora,'ok');
-    } else if(res.erro){
+    } else if(resErro){
       // Erro genérico do servidor — restaurar botão
       btn.disabled      = false;
       btn.textContent   = '📋';
       label.textContent = 'Presença';
-      msg('Erro: '+res.erro,'er');
-    } else {
+      msg('Erro do servidor: '+resErro,'er');
+    } else if(res && res.status === 'ok'){
       _setPresencaRegistrada(hora);
       msg('✅ Presença registrada às '+hora,'ok');
+    } else {
+      // Resposta inesperada — não travar botão
+      btn.disabled      = false;
+      btn.textContent   = '📋';
+      label.textContent = 'Presença';
+      msg('Resposta inesperada. Tente novamente ou atualize o Apps Script.','er');
     }
   } catch(e) {
     btn.disabled      = false;
