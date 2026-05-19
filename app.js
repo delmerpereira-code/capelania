@@ -439,6 +439,36 @@ function setInteg(sim) {
   $('d-nao').classList.toggle('on', !sim);
   $('blk-sim').style.display = sim ? 'block' : 'none';
   $('blk-nao').style.display = sim ? 'none' : 'block';
+  // Regra: NÃO integrar → limpar e travar telefone
+  const telInput = $('d-tel');
+  if(!sim){
+    telInput.value = '';
+    telInput.disabled = true;
+    telInput.style.background = 'var(--g1)';
+    telInput.style.borderColor = 'var(--g2)';
+  } else {
+    telInput.disabled = false;
+    telInput.style.background = '';
+    telInput.style.borderColor = '';
+    telInput.focus();
+  }
+}
+
+// Validação visual em tempo real do telefone
+function validarTelInput(input) {
+  const num = input.value.replace(/\D/g,'');
+  const valido = num.length === 11 && num !== '92000000000';
+  const vazio  = num.length === 0;
+  if(vazio){
+    input.style.borderColor = '';
+    input.style.background  = '';
+  } else if(valido){
+    input.style.borderColor = '#16a34a';
+    input.style.background  = '#f0fdf4';
+  } else {
+    input.style.borderColor = '#dc2626';
+    input.style.background  = '#fef2f2';
+  }
 }
 async function salvarDec() {
   const nm=$('d-nm').value.trim(), tel=$('d-tel').value.trim();
@@ -448,14 +478,18 @@ async function salvarDec() {
   if(S.dec.sexo===null){ msg('Selecione o sexo do assistido.','er'); return; }
   if(S.dec.integ===null){ msg('Informe se deseja realizar a integração (SIM ou NÃO).','er'); return; }
   if(!nm){ msg('Informe o nome do assistido.','er'); return; }
-  if(integ&&!tel){ msg('Informe o telefone.','er'); return; }
-  // Validar telefone — mínimo 10 dígitos, não pode ser só 92
+  if(integ&&!tel){ msg('Informe o telefone para integração.','er'); $('d-tel').focus(); return; }
+  // Validar telefone — exigir exatamente 11 dígitos (DDD 2 + número 9)
   if(integ && tel){
     var telNum = tel.replace(/\D/g,'');
-    if(telNum.length < 10 || telNum === '92' || telNum === '55'){
-      msg('Telefone inválido — informe o número completo com DDD.','er'); return;
+    if(telNum.length !== 11){
+      msg('Telefone inválido — use DDD + 9 dígitos (ex: 92981234567).','er');
+      $('d-tel').focus(); $('d-tel').style.borderColor='#dc2626'; $('d-tel').style.background='#fef2f2';
+      return;
     }
   }
+  // Garantir que NÃO integrar nunca salve telefone
+  const telFinal = integ ? tel : '';
   if(integ&&!det){ msg('Informe as observações.','er'); return; }
   if(!integ&&!mot){ msg('Selecione o motivo.','er'); return; }
   const h=new Date(), hS=fD(h);
@@ -991,8 +1025,14 @@ function fecharFormDec() {
 }
 
 function resetFormDec() {
-  ['d-nm','d-tel','d-obs'].forEach(id=>$(id).value='');
+  ['d-nm','d-obs'].forEach(id=>$(id).value='');
   $('d-mot').value='';
+  // Resetar telefone — sempre começa desabilitado (só habilita ao escolher SIM)
+  const telInput = $('d-tel');
+  telInput.value = '';
+  telInput.disabled = true;
+  telInput.style.background  = 'var(--g1)';
+  telInput.style.borderColor = 'var(--g2)';
   S.dec = {assistido:null, sexo:null, integ:null};
   document.querySelectorAll('#sh-dec .tg').forEach(tg=>{
     tg.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
