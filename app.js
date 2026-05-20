@@ -1724,8 +1724,8 @@ function abrirWpp1() {
   // [Integrador] = col K — quem vai fazer o contato
   const integrador = d.integrador || d.capelao || S.user?.nome || '';
   const msg = encodeURIComponent(
-    `Oi, tudo bem? Aqui é o ${integrador} !!\n\n` +
-    `Estive com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
+    `Oi, tudo bem? Aqui é ${integrador} !!\n\n` +
+    `Nossa equipe Esteve com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
     `Gostaria muito de saber como você está, como tem sido sua recuperação e sua saúde nesse momento. Estamos orando por você e crendo que Deus está cuidando de cada detalhe.\n\n` +
     `Aproveito também para te fazer um convite especial: estamos com um curso gratuito chamado "Um com Deus", da Nova Igreja Batista. É uma oportunidade linda para fortalecer a fé, conhecer mais sobre Deus e pode ser feito online ou presencialmente, do jeitinho que for melhor pra você.\n\n` +
     `Se quiser saber mais ou participar, estou aqui à disposição!`
