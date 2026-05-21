@@ -1727,7 +1727,9 @@ function abrirWpp1() {
   const hospital   = d.hospital   || d.equipe  || '';
   const msg = encodeURIComponent(
     `Oi! Aqui é ${artigo} ${integrador}, da equipe de capelania hospitalar d${artigo} ${hospital}.\n\n` +
-    `Nossa equipe tem orado por você desde a sua visita e gostaríamos muito de saber como está sua recuperação! Aproveito para te convidar para o curso gratuito "Um com Deus", da Nova Igreja Batista. É totalmente gratuito e sem compromisso! 🎁\n\n` +
+    `Nossa equipe tem orado por você desde então e hoje gostaríamos muito de saber como está sua recuperação!\n\n` +
+    `Aproveito para te convidar para o curso gratuito chamado "*Um com Deus*", da Nova Igreja Batista.\n\n` +
+    `Este é totalmente gratuito e sem compromisso! 🎁\n\n` +
     `Uma ótima oportunidade para fortalecer a fé, podendo ser feito online ou presencial. Para assistir online, é só clicar aqui:\n` +
     `https://youtube.com/playlist?list=PLsToeSg6pZF90VbxctNhCkd8i8FC7DPpZ\n\n` +
     `Que Deus continue cuidando de você! 🙏 Estou à disposição!`
