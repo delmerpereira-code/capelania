@@ -1721,16 +1721,16 @@ function abrirDetInteg(id) {
 function abrirWpp1() {
   const d = S._curInteg; if(!d) return;
   const tel = '55' + (d.tel||'').replace(/\D/g,'');
-  // [Integrador] = col K — quem vai fazer o contato
+  // Artigo baseado no sexo do assistido (col I): M → "o", F → "a"
+  const artigo = (d.sexo||'').toUpperCase() === 'F' ? 'a' : 'o';
   const integrador = d.integrador || d.capelao || S.user?.nome || '';
+  const hospital   = d.hospital   || d.equipe  || '';
   const msg = encodeURIComponent(
-    `Oi, tudo bem? Aqui é ${integrador} !!\n\n` +
-    `Nossa equipe esteve com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
-    `Gostaria muito de saber como você está, como tem sido sua recuperação e sua saúde nesse momento. Estamos orando por você e crendo que Deus está cuidando de cada detalhe.\n\n` +
-    `Aproveito também para te fazer um convite especial: estamos com um curso gratuito chamado "Um com Deus", da Nova Igreja Batista. É uma oportunidade linda para fortalecer a fé, conhecer mais sobre Deus e pode ser feito online ou presencialmente, do jeitinho que for melhor pra você. *Tudo grátis !!*\n\n` +
-    `Se optar pelo online clique na parte em azul abaixo.\n` +
+    `Oi! Aqui é ${artigo} ${integrador}, da equipe de capelania hospitalar d${artigo} ${hospital}.\n\n` +
+    `Nossa equipe tem orado por você desde a sua visita e gostaríamos muito de saber como está sua recuperação! Aproveito para te convidar para o curso gratuito "Um com Deus", da Nova Igreja Batista. É totalmente gratuito e sem compromisso! 🎁\n\n` +
+    `Uma ótima oportunidade para fortalecer a fé, podendo ser feito online ou presencial. Para assistir online, é só clicar aqui:\n` +
     `https://youtube.com/playlist?list=PLsToeSg6pZF90VbxctNhCkd8i8FC7DPpZ\n\n` +
-    `Se quiser saber mais ou participar, estou aqui à disposição!`
+    `Que Deus continue cuidando de você! 🙏 Estou à disposição!`
   );
   window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${msg}`, '_blank');
 }
