@@ -1727,8 +1727,9 @@ function abrirWpp1() {
     `Oi, tudo bem? Aqui é ${integrador} !!\n\n` +
     `Nossa equipe esteve com você durante uma de nossas visitas de capelania hospitalar e desde então tenho lembrado de você em minhas orações.\n\n` +
     `Gostaria muito de saber como você está, como tem sido sua recuperação e sua saúde nesse momento. Estamos orando por você e crendo que Deus está cuidando de cada detalhe.\n\n` +
-    `Aproveito também para te fazer um convite especial: estamos com um curso gratuito chamado "Um com Deus", da Nova Igreja Batista. É uma oportunidade linda para fortalecer a fé, conhecer mais sobre Deus e pode ser feito online ou presencialmente, do jeitinho que for melhor pra você.\n\n` +
-    
+    `Aproveito também para te fazer um convite especial: estamos com um curso gratuito chamado "Um com Deus", da Nova Igreja Batista. É uma oportunidade linda para fortalecer a fé, conhecer mais sobre Deus e pode ser feito online ou presencialmente, do jeitinho que for melhor pra você. *Tudo grátis !!*\n\n` +
+    `Se optar pelo online clique na parte em azul abaixo.\n` +
+    `https://youtube.com/playlist?list=PLsToeSg6pZF90VbxctNhCkd8i8FC7DPpZ\n\n` +
     `Se quiser saber mais ou participar, estou aqui à disposição!`
   );
   window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${msg}`, '_blank');
