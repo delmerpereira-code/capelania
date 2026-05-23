@@ -992,14 +992,12 @@ function showEdit(pane, on){
     if($('erg'))  $('erg').value  = m.rg||'';
     if($('eem'))  $('eem').value  = m.email||'';
     if($('ean')) {
-      // Planilha guarda DD/MM/YYYY → input type="date" precisa de YYYY-MM-DD
-      const anivVal = m.aniversario||'';
-      const anivInput = anivVal.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-        ? anivVal.split('/').reverse().join('-')
-        : anivVal.match(/^(\d{2})\/(\d{2})$/)
-          ? '2000-' + anivVal.split('/').reverse().join('-')  // só DD/MM sem ano
-          : anivVal;
-      $('ean').value = anivInput;
+      // Planilha guarda DD/MM ou DD/MM/YYYY — exibir só DD/MM
+      const anivVal = (m.aniversario||'').trim();
+      const partes = anivVal.split('/');
+      // Se vier DD/MM/YYYY ou DD/MM, pegar só os dois primeiros blocos
+      const anivDisplay = (partes.length >= 2) ? partes[0]+'/'+partes[1] : anivVal;
+      $('ean').value = anivDisplay;
     }
     // Sexo — setar valor direto
     const esx = $('esx');
@@ -1044,12 +1042,7 @@ async function salvarDados(){
   const m=S.cur;
   const pin=$('ep').value.trim(),nc=$('enc').value.trim(),ns=$('ens').value.trim();
   if(!pin||!nc||!ns){ msg('Preencha os campos obrigatórios.','er'); return; }
-  const anivRaw = $('ean').value.trim();
-  // Input type="date" retorna YYYY-MM-DD → converter para DD/MM/YYYY para gravar na planilha
-  const anivSalvo = anivRaw.match(/^\d{4}-\d{2}-\d{2}$/)
-    ? anivRaw.split('-').reverse().join('/')
-    : anivRaw;
-  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:m.usuario||pin,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:anivSalvo};
+  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:m.usuario||pin,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:$('ean').value.trim()};
   load('Salvando...');
   try{
     await atualizar('Cadastro', m.linha, buildVals(m,ovr));
@@ -2107,3 +2100,17 @@ function renderAniv() {
       }).join('')}`;
   }).join('');
 }
+
+// ═══════════════════════════════════════
+// MÁSCARA ANIVERSÁRIO DD/MM
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('input', function(e) {
+    if(e.target && e.target.id === 'ean') {
+      let v = e.target.value.replace(/\D/g,'');
+      if(v.length > 4) v = v.slice(0,4);
+      if(v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+      e.target.value = v;
+    }
+  });
+});
