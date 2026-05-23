@@ -2177,7 +2177,7 @@ async function loadRelSemana() {
           <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer" onclick="this.parentElement.querySelector('.rel-pend').style.display=this.parentElement.querySelector('.rel-pend').style.display==='none'?'block':'none'">
             <div style="font-size:20px">${ico}</div>
             <div style="flex:1;min-width:0">
-              <div style="font-weight:700;font-size:15px;color:var(--navy)">${c.capelao}</div>
+              <div style="font-weight:700;font-size:15px;color:var(--navy)">${c.integrador}</div>
               <div style="font-size:12px;color:var(--g5);margin-top:2px">
                 ${c.total} decisão${c.total!==1?'ões':''} · ${c.integradas} integrada${c.integradas!==1?'s':''} · <span style="color:${cor};font-weight:700">${c.saldo} pendente${c.saldo!==1?'s':''}</span>
               </div>
