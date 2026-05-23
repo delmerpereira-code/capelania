@@ -844,17 +844,22 @@ function buildChips() {
   const eqSet = new Set();
   S.cad.forEach(m=>(m.equipes||'').split(',').map(e=>e.trim()).filter(Boolean).forEach(e=>eqSet.add(e)));
 
-  const all = document.createElement('button');
-  all.className='chip on'; all.textContent='Todas';
-  all.onclick=()=>{ S.cadFiltEq='todas'; fc.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); all.classList.add('on'); renderCad(); };
-  fc.appendChild(all);
+  const sel = document.createElement('select');
+  sel.style.cssText='width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:var(--bg);color:var(--tx);font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%23999\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;';
+
+  const optAll = document.createElement('option');
+  optAll.value='todas'; optAll.textContent='👥 Todos os membros';
+  sel.appendChild(optAll);
 
   [...eqSet].sort().forEach(e=>{
-    const b=document.createElement('button');
-    b.className='chip'; b.textContent=e;
-    b.onclick=()=>{ S.cadFiltEq=e; fc.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); b.classList.add('on'); renderCad(); };
-    fc.appendChild(b);
+    const o=document.createElement('option');
+    o.value=e; o.textContent='📍 '+e;
+    sel.appendChild(o);
   });
+
+  sel.value = S.cadFiltEq||'todas';
+  sel.onchange=()=>{ S.cadFiltEq=sel.value; renderCad(); };
+  fc.appendChild(sel);
 }
 
 function renderCad() {
@@ -863,29 +868,13 @@ function renderCad() {
   let mbs = S.cad;
   if(busca) mbs = mbs.filter(m=>(m.nomeSoc+m.nomeComp+m.usuario).toLowerCase().indexOf(busca)>=0);
 
-  // Agrupar — cada membro aparece UMA VEZ na primeira equipe que bater o filtro
-  const grupos = {}, ordem = [];
-  mbs.forEach(m=>{
-    const eqs = (m.equipes||'').split(',').map(e=>e.trim()).filter(Boolean);
-    if(!eqs.length) eqs.push('Sem equipe');
-    if(S.cadFiltEq==='todas'){
-      const eq = eqs[0];
-      if(!grupos[eq]){ grupos[eq]=[]; ordem.push(eq); }
-      grupos[eq].push(m);
-    } else {
-      if(eqs.indexOf(S.cadFiltEq)>=0){
-        if(!grupos[S.cadFiltEq]){ grupos[S.cadFiltEq]=[]; ordem.push(S.cadFiltEq); }
-        grupos[S.cadFiltEq].push(m);
-      }
-    }
-  });
-
-  if(!ordem.length){ ls.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Nenhum membro encontrado.</p></div>'; return; }
-
   let html='';
-  ordem.sort().forEach(eq=>{
-    html+=`<div class="eq-hdr"><span>📍 ${eq}</span><span class="eq-cnt">${grupos[eq].length}</span></div>`;
-    grupos[eq].forEach(m=>{
+
+  if(!S.cadFiltEq || S.cadFiltEq==='todas'){
+    // Modo padrão: lista alfabética simples, sem agrupamento por equipe
+    const sorted = [...mbs].sort((a,b)=>(a.nomeSoc||a.nomeComp).localeCompare(b.nomeSoc||b.nomeComp,'pt-BR'));
+    if(!sorted.length){ ls.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Nenhum membro encontrado.</p></div>'; return; }
+    sorted.forEach(m=>{
       const temFoto = m.foto&&m.foto.indexOf('http')===0;
       const fotoUrl = temFoto ? converterUrlFoto(m.foto) : '';
       html+=`<div class="mrow" onclick="openMembro(${m.linha})">`;
@@ -894,7 +883,25 @@ function renderCad() {
       html+=`<div style="flex:1;min-width:0"><div class="mname">${m.nomeSoc||m.nomeComp}</div></div>
         <span style="color:var(--g3);font-size:20px">›</span></div>`;
     });
-  });
+  } else {
+    // Modo equipe: mostra só membros daquela equipe, agrupados
+    const filtrados = mbs.filter(m=>{
+      const eqs=(m.equipes||'').split(',').map(e=>e.trim()).filter(Boolean);
+      return eqs.indexOf(S.cadFiltEq)>=0;
+    }).sort((a,b)=>(a.nomeSoc||a.nomeComp).localeCompare(b.nomeSoc||b.nomeComp,'pt-BR'));
+    if(!filtrados.length){ ls.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Nenhum membro nesta equipe.</p></div>'; return; }
+    html+=`<div class="eq-hdr"><span>📍 ${S.cadFiltEq}</span><span class="eq-cnt">${filtrados.length}</span></div>`;
+    filtrados.forEach(m=>{
+      const temFoto = m.foto&&m.foto.indexOf('http')===0;
+      const fotoUrl = temFoto ? converterUrlFoto(m.foto) : '';
+      html+=`<div class="mrow" onclick="openMembro(${m.linha})">`;
+      if(temFoto) html+=`<div class="av"><img src="${fotoUrl}" onerror="this.parentElement.textContent='${ini(m.nomeSoc||m.nomeComp)}'"></div>`;
+      else html+=`<div class="av">${ini(m.nomeSoc||m.nomeComp)}</div>`;
+      html+=`<div style="flex:1;min-width:0"><div class="mname">${m.nomeSoc||m.nomeComp}</div></div>
+        <span style="color:var(--g3);font-size:20px">›</span></div>`;
+    });
+  }
+
   ls.innerHTML = html;
 }
 
@@ -984,7 +991,16 @@ function showEdit(pane, on){
     if($('etel')) $('etel').value = m.tel||'';
     if($('erg'))  $('erg').value  = m.rg||'';
     if($('eem'))  $('eem').value  = m.email||'';
-    if($('ean'))  $('ean').value  = m.aniversario||'';
+    if($('ean')) {
+      // Planilha guarda DD/MM/YYYY → input type="date" precisa de YYYY-MM-DD
+      const anivVal = m.aniversario||'';
+      const anivInput = anivVal.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+        ? anivVal.split('/').reverse().join('-')
+        : anivVal.match(/^(\d{2})\/(\d{2})$/)
+          ? '2000-' + anivVal.split('/').reverse().join('-')  // só DD/MM sem ano
+          : anivVal;
+      $('ean').value = anivInput;
+    }
     // Sexo — setar valor direto
     const esx = $('esx');
     if(esx) {
@@ -1028,7 +1044,12 @@ async function salvarDados(){
   const m=S.cur;
   const pin=$('ep').value.trim(),nc=$('enc').value.trim(),ns=$('ens').value.trim();
   if(!pin||!nc||!ns){ msg('Preencha os campos obrigatórios.','er'); return; }
-  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:m.usuario||pin,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:$('ean').value.trim()};
+  const anivRaw = $('ean').value.trim();
+  // Input type="date" retorna YYYY-MM-DD → converter para DD/MM/YYYY para gravar na planilha
+  const anivSalvo = anivRaw.match(/^\d{4}-\d{2}-\d{2}$/)
+    ? anivRaw.split('-').reverse().join('/')
+    : anivRaw;
+  const ovr={pin,nomeComp:nc,nomeSoc:ns,usuario:m.usuario||pin,sexo:$('esx').value,tel:$('etel').value.trim(),rg:$('erg').value.trim(),email:$('eem').value.trim(),aniversario:anivSalvo};
   load('Salvando...');
   try{
     await atualizar('Cadastro', m.linha, buildVals(m,ovr));
