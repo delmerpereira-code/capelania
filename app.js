@@ -164,6 +164,7 @@ function ir(name, navIdx, btn) {
   if(name==='decisoes') loadDecSemana();
   if(name==='integracao') loadIntegracao();
   if(name==='resumo') loadResumo();
+  if(name==='relatorios') loadRelatorios();
   if(name==='aniversarios') loadAniv();
   if(name==='cadastro' && !S.cad.length) loadCad();
 }
@@ -243,6 +244,7 @@ function startSession() {
   if(S.user.perfil==='Líder'){
     mods.push({ico:'👥',lbl:'Cadastro',id:'cadastro'});
     mods.push({ico:'📊',lbl:'Resumo',id:'resumo'});
+    mods.push({ico:'📈',lbl:'Relatórios',id:'relatorios'});
   }
   mods.push({ico:'✝',lbl:'Decisões',id:'decisoes'});
   mods.push({ico:'🔗',lbl:'Integração',id:'integracao'});
@@ -2114,3 +2116,210 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// ═══════════════════════════════════════
+// RELATÓRIOS
+// ═══════════════════════════════════════
+let S_REL = { aba: 'semana' };
+
+async function loadRelatorios() {
+  renderRelatoriosAba();
+}
+
+function renderRelatoriosAba() {
+  const ls = $('rel-conteudo');
+  if(!ls) return;
+  if(S_REL.aba === 'semana') loadRelSemana();
+  else if(S_REL.aba === 'historico') loadRelHistorico();
+  else if(S_REL.aba === 'presenca') loadRelPresenca();
+}
+
+async function loadRelSemana() {
+  const ls = $('rel-conteudo');
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
+  try {
+    const dados = await callScript({acao:'lerRelatorioSemana'});
+    if(dados.erro){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>${dados.erro}</p></div>`; return; }
+    const lista = dados.values || [];
+    const semAtual = dados.semana || '';
+
+    if(!lista.length){
+      ls.innerHTML='<div class="empty"><div class="ei">✅</div><p>Todas as decisões desta semana foram integradas!</p></div>';
+      return;
+    }
+
+    const totalPend = lista.reduce((s,c)=>s+c.saldo,0);
+    const totalDec  = lista.reduce((s,c)=>s+c.total,0);
+    const totalInteg= lista.reduce((s,c)=>s+c.integradas,0);
+    const pctGeral  = totalDec>0?Math.round((totalInteg/totalDec)*100):0;
+
+    let html = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:var(--g2);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:var(--navy)">${totalDec}</div>
+          <div style="font-size:11px;color:var(--g5)">Decisões</div>
+        </div>
+        <div style="background:${totalPend>0?'#fff3f3':'var(--g2)'};border-radius:10px;padding:10px;text-align:center;border:${totalPend>0?'1.5px solid #ffb3b3':'none'}">
+          <div style="font-size:22px;font-weight:700;color:${totalPend>0?'#c0392b':'var(--navy)'}">${totalPend}</div>
+          <div style="font-size:11px;color:var(--g5)">Pendentes</div>
+        </div>
+        <div style="background:var(--g2);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:${pctGeral>=80?'#27ae60':'#e67e22'}">${pctGeral}%</div>
+          <div style="font-size:11px;color:var(--g5)">Integrado</div>
+        </div>
+      </div>`;
+
+    lista.forEach(c => {
+      const cor = c.saldo===0 ? '#27ae60' : c.saldo<=2 ? '#e67e22' : '#c0392b';
+      const ico = c.saldo===0 ? '✅' : c.saldo<=2 ? '⚠️' : '🚨';
+      html += `
+        <div style="background:var(--bg);border:1.5px solid ${c.saldo>0?'#ffcccc':'var(--g2)'};border-radius:12px;margin-bottom:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer" onclick="this.parentElement.querySelector('.rel-pend').style.display=this.parentElement.querySelector('.rel-pend').style.display==='none'?'block':'none'">
+            <div style="font-size:20px">${ico}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:15px;color:var(--navy)">${c.capelao}</div>
+              <div style="font-size:12px;color:var(--g5);margin-top:2px">
+                ${c.total} decisão${c.total!==1?'ões':''} · ${c.integradas} integrada${c.integradas!==1?'s':''} · <span style="color:${cor};font-weight:700">${c.saldo} pendente${c.saldo!==1?'s':''}</span>
+              </div>
+            </div>
+            <div style="background:${cor};color:#fff;border-radius:99px;font-size:13px;font-weight:700;padding:4px 12px">${c.pct}%</div>
+          </div>
+          ${c.pendentes.length>0?`
+          <div class="rel-pend" style="display:none;border-top:1px solid var(--g2);padding:10px 14px">
+            ${c.pendentes.map(p=>`
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--g2)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:600;color:var(--navy)">${p.nome||'Sem nome'}</div>
+                  <div style="font-size:11px;color:var(--g5)">${p.dataVisita}${p.obs?' · '+p.obs:''}</div>
+                </div>
+                ${p.tel?`<a href="https://api.whatsapp.com/send?phone=55${p.tel.replace(/\D/g,'')}" target="_blank" style="background:#25D366;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;text-decoration:none">WhatsApp</a>`:''}
+              </div>`).join('')}
+          </div>`:''}
+        </div>`;
+    });
+
+    ls.innerHTML = html;
+  } catch(e){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`; }
+}
+
+async function loadRelHistorico() {
+  const ls = $('rel-conteudo');
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
+  try {
+    const dados = await callScript({acao:'lerHistoricoCapelao'});
+    if(dados.erro){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>${dados.erro}</p></div>`; return; }
+    const lista = dados.values || [];
+    const semanas = dados.semanas || [];
+
+    if(!lista.length){
+      ls.innerHTML='<div class="empty"><div class="ei">📊</div><p>Nenhum dado histórico disponível ainda.</p></div>';
+      return;
+    }
+
+    let html = `<div style="font-size:12px;color:var(--g5);margin-bottom:12px">Últimas ${semanas.length} semana${semanas.length!==1?'s':''} · 🔴 Precisa atenção · 🟡 Parcial · 🟢 Ok</div>`;
+
+    lista.forEach(c => {
+      const ico = c.alerta ? '🔴' : c.pctGeral>=80 ? '🟢' : '🟡';
+      const corBorda = c.alerta ? '#ffcccc' : 'var(--g2)';
+      const corPct = c.pctGeral>=80?'#27ae60':c.pctGeral>=50?'#e67e22':'#c0392b';
+
+      // Mini gráfico de barras por semana
+      const maxTotal = Math.max(...lista.map(x=>Math.max(...x.historico.map(h=>h.total))),1);
+      const barras = semanas.map(s=>{
+        const h = c.historico.find(x=>x.semana===s)||{total:0,integradas:0,saldo:0};
+        const altTotal = h.total>0?Math.max(4,Math.round((h.total/maxTotal)*28)):0;
+        const altInteg = h.total>0?Math.round((h.integradas/h.total)*altTotal):0;
+        const corB = h.total===0?'var(--g2)':h.saldo===0?'#27ae60':h.saldo<=1?'#e67e22':'#c0392b';
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1">
+          <div style="width:100%;height:${altTotal}px;background:var(--g2);border-radius:3px 3px 0 0;position:relative;overflow:hidden">
+            <div style="position:absolute;bottom:0;width:100%;height:${altInteg}px;background:${corB};border-radius:2px"></div>
+          </div>
+          <div style="font-size:9px;color:var(--g4)">${s}</div>
+        </div>`;
+      }).join('');
+
+      html += `
+        <div style="background:var(--bg);border:1.5px solid ${corBorda};border-radius:12px;margin-bottom:10px;padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="font-size:18px">${ico}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:15px;color:var(--navy)">${c.capelao}</div>
+              <div style="font-size:12px;color:var(--g5);margin-top:1px">${c.totalGeral} decisões · ${c.semNegativas} sem${c.semNegativas!==1?'':''} com pendência</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:700;color:${corPct}">${c.pctGeral}%</div>
+              <div style="font-size:10px;color:var(--g5)">integrado</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:3px;height:36px;margin-top:4px">
+            ${barras}
+          </div>
+        </div>`;
+    });
+
+    ls.innerHTML = html;
+  } catch(e){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`; }
+}
+
+function relAba(aba, btn) {
+  S_REL.aba = aba;
+  document.querySelectorAll('.rel-tab-btn').forEach(b=>b.classList.remove('rel-tab-on'));
+  if(btn) btn.classList.add('rel-tab-on');
+  renderRelatoriosAba();
+}
+
+async function loadRelPresenca() {
+  const ls = $('rel-conteudo');
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando...</p></div>';
+  try {
+    const dados = await callScript({acao:'lerRelatorioPresenca', semana:'atual'});
+    if(dados.erro){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>${dados.erro}</p></div>`; return; }
+    const lista = dados.values || [];
+
+    if(!lista.length){
+      ls.innerHTML='<div class="empty"><div class="ei">📋</div><p>Nenhuma presença registrada esta semana.</p></div>';
+      return;
+    }
+
+    let html = '';
+    lista.forEach(eq => {
+      const cor = eq.pct >= 80 ? '#27ae60' : eq.pct >= 60 ? '#e67e22' : '#c0392b';
+      const ico = eq.pct >= 80 ? '🟢' : eq.pct >= 60 ? '🟡' : '🔴';
+      const barW = Math.max(4, eq.pct);
+
+      html += `
+        <div style="background:var(--bg);border:1.5px solid ${eq.alerta?'#ffcccc':'var(--g2)'};border-radius:12px;margin-bottom:10px;overflow:hidden">
+          <div style="padding:12px 14px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div style="font-size:16px">${ico}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:14px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${eq.equipe}</div>
+                <div style="font-size:11px;color:var(--g5);margin-top:1px">${eq.datas||'—'}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:18px;font-weight:700;color:${cor}">${eq.pct}%</div>
+                <div style="font-size:10px;color:var(--g5)">${eq.totalPresentes}/${eq.totalMembros}</div>
+              </div>
+            </div>
+            <div style="height:6px;background:var(--g2);border-radius:99px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:${cor};border-radius:99px;transition:width .4s"></div>
+            </div>
+          </div>
+          <div style="display:none;border-top:1px solid var(--g2)">
+            ${eq.ausentes.length>0?`
+            <div style="padding:10px 14px;background:#fff8f8">
+              <div style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:6px">❌ Faltaram (${eq.ausentes.length})</div>
+              ${eq.ausentes.map(n=>`<div style="font-size:13px;color:var(--navy);padding:3px 0;border-bottom:0.5px solid var(--g2)">${n}</div>`).join('')}
+            </div>`:''}
+            ${eq.presentesNomes.length>0?`
+            <div style="padding:10px 14px">
+              <div style="font-size:12px;font-weight:700;color:#27ae60;margin-bottom:6px">✅ Presentes (${eq.presentesNomes.length})</div>
+              ${eq.presentesNomes.map(n=>`<div style="font-size:13px;color:var(--navy);padding:3px 0;border-bottom:0.5px solid var(--g2)">${n}</div>`).join('')}
+            </div>`:''}
+          </div>
+        </div>`;
+    });
+
+    ls.innerHTML = html;
+  } catch(e){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`; }
+}
