@@ -239,8 +239,8 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
   </div>
   <div class="login-box">
     <div class="lerr" id="lerr"></div>
-    <div class="lf"><label>Matrícula</label><input type="tel" id="lu" placeholder="Ex: 12345" inputmode="numeric" autocomplete="off"></div>
-    <div class="lf"><label>Senha</label><input type="password" id="lp" placeholder="••••••" inputmode="numeric"></div>
+    <div class="lf"><label>Matrícula</label><input type="text" id="lu" placeholder="Ex: 12345" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter') doLogin()"></div>
+    <div class="lf"><label>Senha</label><input type="password" id="lp" placeholder="••••••" inputmode="numeric" onkeydown="if(event.key==='Enter') doLogin()"></div>
     <div class="lf" id="leqc" style="display:none">
       <label>Equipe</label>
       <div class="sel-wrap"><select id="leq"><option value="">Selecione sua equipe</option></select></div>
