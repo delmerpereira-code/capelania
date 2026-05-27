@@ -337,40 +337,45 @@ async function verificarPresencaHoje() {
     return;
   }
 
-  // Fora do dia da visita e sem registro — bloquear sem consultar servidor
-  if(!eDiaVisita) {
+  // Consultar servidor: matrícula + equipe + semana
+  try {
+    const sw = getSemana();
+    const res = await callScript({
+      acao:      'verificarPresenca',
+      matricula: S.user.matricula||S.user.codigo,
+      equipe:    encodeURIComponent(S.equipe||''),
+      semanaIni: fD(sw.ini),
+      semanaFim: fD(sw.fim)
+    });
+    if(res.registrado){
+      // Já registrou esta semana — mostrar verde independente de qual dia é hoje
+      S._presencaRegistrada = true;
+      S._presencaHora = res.hora || '';
+      _setPresencaRegistrada(res.hora);
+      return;
+    }
+  } catch(e) { /* silencioso — continua para estado padrão */ }
+
+  // Não registrou — só liberar se hoje É o dia da visita
+  if(eDiaVisita) {
+    btn.disabled         = false;
+    btn.style.background = 'rgba(255,255,255,.1)';
+    btn.style.border     = '2px solid rgba(255,255,255,.25)';
+    btn.style.cursor     = 'pointer';
+    btn.style.opacity    = '1';
+    btn.textContent      = '📋';
+    btn.title            = 'Registrar presença';
+    label.textContent    = 'Presença';
+  } else {
+    // Fora do dia da visita e sem registro — bloquear
     btn.disabled         = true;
     btn.style.background = 'rgba(255,255,255,.06)';
     btn.style.border     = '2px solid rgba(255,255,255,.1)';
     btn.style.cursor     = 'default';
     btn.style.opacity    = '0.4';
     btn.textContent      = '📋';
-    btn.title            = 'Presença disponível apenas no dia da visita';
+    btn.title            = 'Presença disponível apenas no dia da visita (' + diaVis.slice(0,5) + ')';
     label.textContent    = diaVis.slice(0,5);
-    return;
-  }
-
-  // É o dia da visita — consultar servidor
-  btn.style.opacity = '1';
-  try {
-    const res = await callScript({ acao:'verificarPresenca', matricula: S.user.matricula||S.user.codigo, data: hoje });
-    if(res.registrado){
-      S._presencaRegistrada = true;
-      S._presencaHora = res.hora || '';
-      _setPresencaRegistrada(res.hora);
-    } else {
-      btn.disabled         = false;
-      btn.style.background = 'rgba(255,255,255,.1)';
-      btn.style.border     = '2px solid rgba(255,255,255,.25)';
-      btn.style.cursor     = 'pointer';
-      btn.textContent      = '📋';
-      btn.title            = 'Registrar presença';
-      label.textContent    = 'Presença';
-    }
-  } catch(e) {
-    btn.disabled      = false;
-    btn.textContent   = '📋';
-    label.textContent = 'Presença';
   }
 }
 
