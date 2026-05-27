@@ -415,6 +415,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
     <div class="search" style="margin-bottom:12px">
       <input type="text" id="i-search" placeholder="Buscar nome..." oninput="renderIntegLista()" autocomplete="off">
     </div>
+    <div id="i-chips" style="margin-bottom:12px"></div>
     <div id="i-lista"><div class="empty"><div class="ei">🔗</div><p>Carregando...</p></div></div>
   </div>
   <nav class="nav">
@@ -820,6 +821,64 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
     </div>
     <div id="rel-conteudo">
       <div class="empty"><div class="ei">📊</div><p>Selecione uma aba.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- EQUIPES GESTÃO -->
+<div class="sc" id="sc-equipes">
+  <div class="hdr">
+    <button class="hdr-back" onclick="ir('home')">←</button>
+    <div class="hdr-title">Equipes</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="pg no-nav" style="padding-bottom:80px">
+    <div id="eq-mgr-lista">
+      <div class="empty"><div class="ei">⚙️</div><p>Carregando...</p></div>
+    </div>
+  </div>
+  <button class="fab" onclick="abrirNovaEquipe()">+</button>
+</div>
+
+<!-- MODAL NOVA / EDITAR EQUIPE -->
+<div class="shov" id="sh-eq-form">
+  <div class="sh" style="padding-bottom:40px">
+    <div class="sh-bar"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px">
+      <div class="sh-title" id="eq-form-titulo" style="padding:0;font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy)">Nova Equipe</div>
+      <button onclick="$('sh-eq-form').classList.remove('on')" style="width:36px;height:36px;border-radius:50%;border:none;background:var(--g2);color:var(--g6);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="f">
+        <label>Nome da Equipe *</label>
+        <input type="text" id="eq-f-nome" placeholder="Ex: HPS 28 de Agosto – Sáb 15h" autocomplete="off">
+      </div>
+      <div class="f">
+        <label>Dia da Semana</label>
+        <div class="sel-wrap">
+          <select id="eq-f-dia">
+            <option value="">Selecione...</option>
+            <option>Segunda-feira</option>
+            <option>Terça-feira</option>
+            <option>Quarta-feira</option>
+            <option>Quinta-feira</option>
+            <option>Sexta-feira</option>
+            <option>Sábado</option>
+            <option>Domingo</option>
+          </select>
+        </div>
+      </div>
+      <div class="f">
+        <label>Horário</label>
+        <input type="text" id="eq-f-hora" placeholder="Ex: 14h às 16h" autocomplete="off">
+      </div>
+      <div class="f">
+        <label>Matrícula do Líder</label>
+        <input type="text" id="eq-f-lider" placeholder="Ex: 12345" inputmode="numeric" autocomplete="off">
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn btn-p" onclick="salvarEquipeForm()">💾 Salvar Equipe</button>
+      </div>
     </div>
   </div>
 </div>
