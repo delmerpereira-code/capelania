@@ -1521,7 +1521,10 @@ async function loadIntegracao() {
     S._integLista = lista;
     S._integFiltro = S._integFiltro || 'todos';
     S._integEqFiltro = S._integEqFiltro || 'todas';
-    // Garantir que eqList está carregado para o filtro de equipe
+    // Garantir cadAll e eqList carregados para o filtro de equipe
+    if(!S.cadAll.length) {
+      try { S.cadAll = await lerCadastro(); } catch(e) { /* silencioso */ }
+    }
     if(!S.eqList.length) {
       try { S.eqList = await lerEquipes(); } catch(e) { /* silencioso */ }
     }
@@ -1567,10 +1570,21 @@ function renderIntegLista() {
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
 
-  // Filtro por equipe da decisão
+  // Filtro por equipe do capelão (col equipes do cadastro)
   const eqFiltro = S._integEqFiltro || 'todas';
   if(eqFiltro !== 'todas') {
-    lista = lista.filter(d => (d.hospital||'') === eqFiltro);
+    // Montar set de capelões que pertencem à equipe selecionada
+    const capeloesNaEquipe = new Set();
+    (S.cadAll||[]).forEach(m => {
+      const eqs = (m.equipes||'').split(',').map(e=>e.trim()).filter(Boolean);
+      if(eqs.indexOf(eqFiltro) >= 0) {
+        capeloesNaEquipe.add((m.nomeSoc||m.nomeComp||'').toLowerCase());
+      }
+    });
+    lista = lista.filter(d => {
+      const nomeInteg = (d.integrador||d.capelao||'').toLowerCase();
+      return capeloesNaEquipe.has(nomeInteg);
+    });
   }
 
   // Filtro de busca por nome do capelão integrador
@@ -2388,23 +2402,30 @@ function buildIntegChips() {
   const fc = $('i-chips');
   if(!fc) return;
 
-  // Montar set de hospitais DAS DECISÕES (equipe onde foi feita a visita)
+  // Montar set de equipes DOS CAPELÕES que aparecem na integração
+  // Usando S.cadAll para mapear integrador → equipe(s)
   const eqSet = new Set();
   (S._integLista||[]).forEach(d => {
-    const eq = d.hospital || '';
-    if(eq) eqSet.add(eq);
+    const nomeInteg = (d.integrador || d.capelao || '').toLowerCase();
+    // Buscar o membro correspondente no cadAll para pegar a equipe
+    const membro = (S.cadAll||[]).find(m =>
+      (m.nomeSoc||m.nomeComp||'').toLowerCase() === nomeInteg
+    );
+    if(membro && membro.equipes) {
+      membro.equipes.split(',').map(e=>e.trim()).filter(Boolean).forEach(e => eqSet.add(e));
+    }
   });
 
   // Reusar select existente para não perder a seleção ao recarregar
   let sel = fc.querySelector('select');
   if(!sel) {
     sel = document.createElement('select');
-    sel.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:#fff;color:#0f172a;font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;margin-bottom:8px;';
+    sel.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:#fff;color:#0f172a;font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%23999\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;margin-bottom:8px;';
     sel.onchange = () => { S._integEqFiltro = sel.value; renderIntegLista(); };
     fc.appendChild(sel);
   }
 
-  // Reconstruir opções preservando a seleção atual
+  // Reconstruir opções preservando seleção atual
   const valorAtual = S._integEqFiltro || 'todas';
   sel.innerHTML = '';
   const optAll = document.createElement('option');
