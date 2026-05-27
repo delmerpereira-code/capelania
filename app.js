@@ -1566,11 +1566,14 @@ function renderIntegLista() {
   let lista = S._integLista;
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
-  // Filtro por equipe da decisão (hospital onde foi feita a visita)
-  if(S._integEqFiltro && S._integEqFiltro !== 'todas') {
-    lista = lista.filter(d => (d.hospital||'') === S._integEqFiltro);
+
+  // Filtro por equipe da decisão
+  const eqFiltro = S._integEqFiltro || 'todas';
+  if(eqFiltro !== 'todas') {
+    lista = lista.filter(d => (d.hospital||'') === eqFiltro);
   }
-  // Filtro de busca por nome do integrador
+
+  // Filtro de busca por nome do capelão integrador
   const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
   if(busca) {
     lista = lista.filter(d => {
@@ -1578,18 +1581,59 @@ function renderIntegLista() {
       return nomeGrupo.indexOf(busca) >= 0;
     });
   }
+
   if(!lista.length){
-    const msgTxt = S._integFiltro==='sim' ? 'Nenhum integrado ainda.' : S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
+    const msgTxt = eqFiltro !== 'todas' ? 'Nenhum registro nesta equipe.' :
+      S._integFiltro==='sim' ? 'Nenhum integrado ainda.' :
+      S._integFiltro==='nao' ? 'Todos já foram integrados! 🎉' : 'Nenhum registro.';
     ls.innerHTML = `<div class="empty"><div class="ei">${S._integFiltro==='nao'?'🎉':'🔗'}</div><p>${msgTxt}</p></div>`;
     return;
   }
+
+  // ── MODO EQUIPE: lista plana dos assistidos daquela equipe (igual ao cadastro) ──
+  if(eqFiltro !== 'todas') {
+    const sorted = [...lista].sort((a,b) => {
+      const okA = isIntegrado(a), okB = isIntegrado(b);
+      if(okA !== okB) return okA - okB; // pendentes primeiro
+      return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
+    });
+    S._integListaFiltrada = sorted;
+    const simCnt = sorted.filter(d=>isIntegrado(d)).length;
+    const naoCnt = sorted.length - simCnt;
+    ls.innerHTML = `
+      <div class="eq-hdr" style="padding:10px 14px;margin-bottom:4px">
+        <span style="font-size:13px;font-weight:700;color:var(--navy)">📍 ${eqFiltro}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${naoCnt>0?`<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">❤️ ${naoCnt}</span>`:''}
+          ${simCnt>0?`<span style="background:#dcfce7;color:#15803d;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">💚 ${simCnt}</span>`:''}
+        </div>
+      </div>
+      ${sorted.map(d => {
+        const ok = isIntegrado(d);
+        return `<div onclick="abrirDetInteg('${d.id}')" style="cursor:pointer;background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:6px;border:1.5px solid var(--g2);display:flex;align-items:center;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:700;color:var(--navy)">${d.nome}</div>
+            <div style="font-size:12px;color:var(--g5);margin-top:3px">
+              ${d.assistido} · 👤 ${d.integrador||d.capelao||'-'}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+            <span style="font-size:22px">${ok?'💚':'❤️'}</span>
+            <span style="font-size:11px;font-weight:700;color:${ok?'#15803d':'#991b1b'}">${ok?'SIM':'NÃO'}</span>
+          </div>
+        </div>`;
+      }).join('')}`;
+    return;
+  }
+
+  // ── MODO TODOS: accordion por capelão (comportamento original) ──
   const grupos = {}, ordem = [];
   lista.forEach(d => {
     const cp = d.integrador || d.capelao || 'Sem integrador';
     if(!grupos[cp]){ grupos[cp]=[]; ordem.push(cp); }
     grupos[cp].push(d);
   });
-  // Ordenar integradores: Feminino primeiro, depois Masculino, cada um por nome ASC
+  // Ordenar: Feminino primeiro, depois Masculino, cada um por nome ASC
   function sexoInteg(nome) {
     const m = (S.cadAll||[]).find(x => (x.nomeSoc||x.nomeComp||'').toLowerCase()===nome.toLowerCase());
     return m ? (m.sexo||'').toUpperCase() : '';
@@ -2343,31 +2387,37 @@ async function loadRelPresenca() {
 function buildIntegChips() {
   const fc = $('i-chips');
   if(!fc) return;
-  fc.innerHTML = '';
 
-  // Montar lista de equipes/hospitais DAS DECISÕES (d.hospital = equipe onde foi feita a visita)
+  // Montar set de hospitais DAS DECISÕES (equipe onde foi feita a visita)
   const eqSet = new Set();
   (S._integLista||[]).forEach(d => {
-    const eq = d.hospital || '';  // hospital = equipe da decisão, não do capelão
+    const eq = d.hospital || '';
     if(eq) eqSet.add(eq);
   });
 
-  const sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:var(--bg);color:var(--tx);font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%23999\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;margin-bottom:8px;';
+  // Reusar select existente para não perder a seleção ao recarregar
+  let sel = fc.querySelector('select');
+  if(!sel) {
+    sel = document.createElement('select');
+    sel.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:#fff;color:#0f172a;font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;margin-bottom:8px;';
+    sel.onchange = () => { S._integEqFiltro = sel.value; renderIntegLista(); };
+    fc.appendChild(sel);
+  }
 
+  // Reconstruir opções preservando a seleção atual
+  const valorAtual = S._integEqFiltro || 'todas';
+  sel.innerHTML = '';
   const optAll = document.createElement('option');
-  optAll.value = 'todas'; optAll.textContent = '👥 Todos os capelães';
+  optAll.value = 'todas'; optAll.textContent = '\u{1F465} Todos os capelães';
   sel.appendChild(optAll);
 
-  [...eqSet].sort().forEach(e => {
+  [...eqSet].sort((a,b) => a.localeCompare(b,'pt-BR')).forEach(e => {
     const o = document.createElement('option');
-    o.value = e; o.textContent = '📍 ' + e;
+    o.value = e; o.textContent = '\u{1F4CD} ' + e;
     sel.appendChild(o);
   });
 
-  sel.value = S._integEqFiltro || 'todas';
-  sel.onchange = () => { S._integEqFiltro = sel.value; renderIntegLista(); };
-  fc.appendChild(sel);
+  sel.value = valorAtual;
 }
 
 // ═══════════════════════════════════════
