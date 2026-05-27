@@ -1566,9 +1566,9 @@ function renderIntegLista() {
   let lista = S._integLista;
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
-  // Filtro por equipe
+  // Filtro por equipe da decisão (hospital onde foi feita a visita)
   if(S._integEqFiltro && S._integEqFiltro !== 'todas') {
-    lista = lista.filter(d => (d.equipe||d.hospital||'') === S._integEqFiltro);
+    lista = lista.filter(d => (d.hospital||'') === S._integEqFiltro);
   }
   // Filtro de busca por nome do integrador
   const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
@@ -2345,10 +2345,10 @@ function buildIntegChips() {
   if(!fc) return;
   fc.innerHTML = '';
 
-  // Montar lista de equipes presentes na integração atual
+  // Montar lista de equipes/hospitais DAS DECISÕES (d.hospital = equipe onde foi feita a visita)
   const eqSet = new Set();
   (S._integLista||[]).forEach(d => {
-    const eq = d.equipe || d.hospital || '';
+    const eq = d.hospital || '';  // hospital = equipe da decisão, não do capelão
     if(eq) eqSet.add(eq);
   });
 
@@ -2389,16 +2389,22 @@ async function loadEquipes() {
 function renderEquipesMgr() {
   const ls = $('eq-mgr-lista');
   if(!ls) return;
-  const lista = S.eqList || [];
+  const lista = [...(S.eqList || [])].sort((a,b) => {
+    const na = (a.equipe||a.nome||'').toLowerCase();
+    const nb = (b.equipe||b.nome||'').toLowerCase();
+    return na.localeCompare(nb, 'pt-BR');
+  });
   if(!lista.length) {
     ls.innerHTML = '<div class="empty"><div class="ei">⚙️</div><p>Nenhuma equipe cadastrada.<br>Toque + para adicionar.</p></div>';
     return;
   }
   ls.innerHTML = lista.map((eq, i) => {
-    const nome = eq.equipe || eq.nome || '';
-    const dia  = eq.diaSemana || '';
-    const hora = eq.hora || '';
+    const nome  = eq.equipe || eq.nome || '';
+    const dia   = eq.diaSemana || '';
+    const hora  = eq.hora || '';
     const lider = eq.liderMatricula || '';
+    // índice real no S.eqList para editar/excluir corretamente após sort
+    const realIdx = S.eqList.indexOf(eq);
     return `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1.5px solid var(--g2);display:flex;align-items:center;gap:12px">
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:700;color:var(--navy)">${nome}</div>
@@ -2407,8 +2413,8 @@ function renderEquipesMgr() {
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button onclick="abrirEditEquipe(${i})" style="border:none;background:var(--g2);color:var(--navy);border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">✏️</button>
-        <button onclick="confirmarExcluirEquipe(${i})" style="border:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">🗑️</button>
+        <button onclick="abrirEditEquipe(${realIdx})" style="border:none;background:var(--g2);color:var(--navy);border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">✏️</button>
+        <button onclick="confirmarExcluirEquipe(${realIdx})" style="border:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">🗑️</button>
       </div>
     </div>`;
   }).join('');
