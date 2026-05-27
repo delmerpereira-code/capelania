@@ -163,6 +163,7 @@ function ir(name, navIdx, btn) {
     if(nav) nav.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
   }
+  if(name==='home') verificarPresencaHoje();
   if(name==='decisoes') loadDecSemana();
   if(name==='integracao') loadIntegracao();
   if(name==='resumo') loadResumo();
@@ -325,23 +326,48 @@ async function verificarPresencaHoje() {
   const btn   = $('btn-presenca');
   const label = $('presenca-label');
   if(!btn || !label) return;
+
+  const hoje   = fD(new Date());
+  const diaVis = fD(S.dv || new Date());
+
+  // Fora do dia da visita — bloquear sem consultar servidor
+  if(hoje !== diaVis) {
+    btn.disabled         = true;
+    btn.style.background = 'rgba(255,255,255,.06)';
+    btn.style.border     = '2px solid rgba(255,255,255,.1)';
+    btn.style.cursor     = 'default';
+    btn.style.opacity    = '0.4';
+    btn.textContent      = '📋';
+    btn.title            = 'Presença disponível apenas no dia da visita';
+    label.textContent    = diaVis.slice(0,5);
+    return;
+  }
+
+  // Restaurar opacidade (dia correto)
+  btn.style.opacity = '1';
+
+  // Estado já gravado na sessão — aplicar direto sem chamar servidor
+  if(S._presencaRegistrada) {
+    _setPresencaRegistrada(S._presencaHora || '');
+    return;
+  }
+
   try {
-    const hoje = fD(new Date()); // dd/mm/aaaa
-    const res  = await callScript({ acao:'verificarPresenca', matricula: S.user.matricula||S.user.codigo, data: hoje });
+    const res = await callScript({ acao:'verificarPresenca', matricula: S.user.matricula||S.user.codigo, data: hoje });
     if(res.registrado){
-      // Já registrou hoje — mostrar horário
+      S._presencaRegistrada = true;
+      S._presencaHora = res.hora || '';
       _setPresencaRegistrada(res.hora);
     } else {
-      // Ainda não registrou — botão ativo
       btn.disabled = false;
       btn.style.background = 'rgba(255,255,255,.1)';
       btn.style.border     = '2px solid rgba(255,255,255,.25)';
+      btn.style.cursor     = 'pointer';
       btn.textContent      = '📋';
       btn.title            = 'Registrar presença';
       label.textContent    = 'Presença';
     }
   } catch(e) {
-    // Sem resposta — deixar botão ativo para tentar registrar
     btn.disabled      = false;
     btn.textContent   = '📋';
     label.textContent = 'Presença';
@@ -353,9 +379,10 @@ function _setPresencaRegistrada(hora) {
   const label = $('presenca-label');
   if(!btn || !label) return;
   btn.disabled         = true;
-  btn.style.background = 'rgba(39,174,96,.35)';
-  btn.style.border     = '2px solid rgba(39,174,96,.7)';
+  btn.style.background = 'rgba(39,174,96,.55)';
+  btn.style.border     = '2px solid rgba(39,174,96,.9)';
   btn.style.cursor     = 'default';
+  btn.style.opacity    = '1';
   btn.textContent      = '✅';
   btn.title            = 'Presença já registrada';
   label.textContent    = hora ? 'às '+hora : 'Registrado';
@@ -385,7 +412,8 @@ async function registrarPresenca() {
     });
     const resErro = res && res.erro;
     if(resErro === 'duplicata'){
-      // Duplicata confirmada — mostrar horário anterior
+      S._presencaRegistrada = true;
+      S._presencaHora = res.hora || '';
       _setPresencaRegistrada(res.hora);
       msg('Presença já registrada hoje às '+res.hora,'ok');
     } else if(resErro){
@@ -395,6 +423,8 @@ async function registrarPresenca() {
       label.textContent = 'Presença';
       msg('Erro do servidor: '+resErro,'er');
     } else if(res && res.status === 'ok'){
+      S._presencaRegistrada = true;
+      S._presencaHora = hora;
       _setPresencaRegistrada(hora);
       msg('✅ Presença registrada às '+hora,'ok');
     } else {
@@ -415,6 +445,7 @@ async function registrarPresenca() {
 function doSair() {
   S.user=null; S.equipe=null; S.loginData=null; S.decSession=[];
   S.cad=[]; S.cadAll=[]; S.eqList=[]; S.cur=null;
+  S._presencaRegistrada=false; S._presencaHora='';
   $('lu').value=''; $('lp').value=''; $('leqc').style.display='none';
   $('lbtn').textContent='Verificar acesso'; $('lbtn').onclick=doLogin; $('lerr').style.display='none';
   document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
