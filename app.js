@@ -1604,43 +1604,7 @@ function renderIntegLista() {
     return;
   }
 
-  // ── MODO EQUIPE: lista plana dos assistidos daquela equipe (igual ao cadastro) ──
-  if(eqFiltro !== 'todas') {
-    const sorted = [...lista].sort((a,b) => {
-      const okA = isIntegrado(a), okB = isIntegrado(b);
-      if(okA !== okB) return okA - okB; // pendentes primeiro
-      return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
-    });
-    S._integListaFiltrada = sorted;
-    const simCnt = sorted.filter(d=>isIntegrado(d)).length;
-    const naoCnt = sorted.length - simCnt;
-    ls.innerHTML = `
-      <div class="eq-hdr" style="padding:10px 14px;margin-bottom:4px">
-        <span style="font-size:13px;font-weight:700;color:var(--navy)">📍 ${eqFiltro}</span>
-        <div style="display:flex;gap:6px;align-items:center">
-          ${naoCnt>0?`<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">❤️ ${naoCnt}</span>`:''}
-          ${simCnt>0?`<span style="background:#dcfce7;color:#15803d;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">💚 ${simCnt}</span>`:''}
-        </div>
-      </div>
-      ${sorted.map(d => {
-        const ok = isIntegrado(d);
-        return `<div onclick="abrirDetInteg('${d.id}')" style="cursor:pointer;background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:6px;border:1.5px solid var(--g2);display:flex;align-items:center;gap:12px">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:700;color:var(--navy)">${d.nome}</div>
-            <div style="font-size:12px;color:var(--g5);margin-top:3px">
-              ${d.assistido} · 👤 ${d.integrador||d.capelao||'-'}
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
-            <span style="font-size:22px">${ok?'💚':'❤️'}</span>
-            <span style="font-size:11px;font-weight:700;color:${ok?'#15803d':'#991b1b'}">${ok?'SIM':'NÃO'}</span>
-          </div>
-        </div>`;
-      }).join('')}`;
-    return;
-  }
-
-  // ── MODO TODOS: accordion por capelão (comportamento original) ──
+  // ── ACCORDION por capelão — mesmo layout para todos os filtros ──
   const grupos = {}, ordem = [];
   lista.forEach(d => {
     const cp = d.integrador || d.capelao || 'Sem integrador';
