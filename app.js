@@ -329,9 +329,16 @@ async function verificarPresencaHoje() {
 
   const hoje   = fD(new Date());
   const diaVis = fD(S.dv || new Date());
+  const eDiaVisita = (hoje === diaVis);
 
-  // Fora do dia da visita — bloquear sem consultar servidor
-  if(hoje !== diaVis) {
+  // Estado já gravado na sessão — aplicar direto sem chamar servidor
+  if(S._presencaRegistrada) {
+    _setPresencaRegistrada(S._presencaHora || '');
+    return;
+  }
+
+  // Fora do dia da visita e sem registro — bloquear sem consultar servidor
+  if(!eDiaVisita) {
     btn.disabled         = true;
     btn.style.background = 'rgba(255,255,255,.06)';
     btn.style.border     = '2px solid rgba(255,255,255,.1)';
@@ -343,15 +350,8 @@ async function verificarPresencaHoje() {
     return;
   }
 
-  // Restaurar opacidade (dia correto)
+  // É o dia da visita — consultar servidor
   btn.style.opacity = '1';
-
-  // Estado já gravado na sessão — aplicar direto sem chamar servidor
-  if(S._presencaRegistrada) {
-    _setPresencaRegistrada(S._presencaHora || '');
-    return;
-  }
-
   try {
     const res = await callScript({ acao:'verificarPresenca', matricula: S.user.matricula||S.user.codigo, data: hoje });
     if(res.registrado){
@@ -359,7 +359,7 @@ async function verificarPresencaHoje() {
       S._presencaHora = res.hora || '';
       _setPresencaRegistrada(res.hora);
     } else {
-      btn.disabled = false;
+      btn.disabled         = false;
       btn.style.background = 'rgba(255,255,255,.1)';
       btn.style.border     = '2px solid rgba(255,255,255,.25)';
       btn.style.cursor     = 'pointer';
