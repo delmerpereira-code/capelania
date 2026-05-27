@@ -13,6 +13,8 @@ const S = {
   decSession: [],
   cadAll: [], cad: [], eqList: [],
   cadFiltEq: 'todas',
+  eqFiltEq: 'todas',
+  _integEqFiltro: 'todas',
   cur: null  // membro atual
 };
 
@@ -167,6 +169,7 @@ function ir(name, navIdx, btn) {
   if(name==='relatorios') loadRelatorios();
   if(name==='aniversarios') loadAniv();
   if(name==='cadastro' && !S.cad.length) loadCad();
+  if(name==='equipes') loadEquipes();
 }
 
 // ═══════════════════════════════════════
@@ -243,6 +246,7 @@ function startSession() {
   const mods = [];
   if(S.user.perfil==='Líder'){
     mods.push({ico:'👥',lbl:'Cadastro',id:'cadastro'});
+    mods.push({ico:'⚙️',lbl:'Equipes',id:'equipes'});
     mods.push({ico:'📊',lbl:'Resumo',id:'resumo'});
     mods.push({ico:'📈',lbl:'Relatórios',id:'relatorios'});
   }
@@ -1516,6 +1520,12 @@ async function loadIntegracao() {
     // Guardar lista completa para filtros
     S._integLista = lista;
     S._integFiltro = S._integFiltro || 'todos';
+    S._integEqFiltro = S._integEqFiltro || 'todas';
+    // Garantir que eqList está carregado para o filtro de equipe
+    if(!S.eqList.length) {
+      try { S.eqList = await lerEquipes(); } catch(e) { /* silencioso */ }
+    }
+    buildIntegChips();
 
     // Contadores
     const totalSim = lista.filter(d => isIntegrado(d)).length;
@@ -1556,10 +1566,13 @@ function renderIntegLista() {
   let lista = S._integLista;
   if(S._integFiltro === 'sim') lista = lista.filter(d => isIntegrado(d));
   if(S._integFiltro === 'nao') lista = lista.filter(d => !isIntegrado(d));
-  // Filtro de busca por nome
+  // Filtro por equipe
+  if(S._integEqFiltro && S._integEqFiltro !== 'todas') {
+    lista = lista.filter(d => (d.equipe||d.hospital||'') === S._integEqFiltro);
+  }
+  // Filtro de busca por nome do integrador
   const busca = ($('i-search') ? $('i-search').value : '').toLowerCase().trim();
   if(busca) {
-    // Filtrar pelo mesmo campo que nomeia o grupo: integrador || capelao
     lista = lista.filter(d => {
       const nomeGrupo = (d.integrador || d.capelao || '').toLowerCase();
       return nomeGrupo.indexOf(busca) >= 0;
@@ -2322,4 +2335,157 @@ async function loadRelPresenca() {
 
     ls.innerHTML = html;
   } catch(e){ ls.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`; }
+}
+
+// ═══════════════════════════════════════
+// INTEGRAÇÃO — CHIPS DE EQUIPE (igual ao cadastro)
+// ═══════════════════════════════════════
+function buildIntegChips() {
+  const fc = $('i-chips');
+  if(!fc) return;
+  fc.innerHTML = '';
+
+  // Montar lista de equipes presentes na integração atual
+  const eqSet = new Set();
+  (S._integLista||[]).forEach(d => {
+    const eq = d.equipe || d.hospital || '';
+    if(eq) eqSet.add(eq);
+  });
+
+  const sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--g2);background:var(--bg);color:var(--tx);font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%23999\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;margin-bottom:8px;';
+
+  const optAll = document.createElement('option');
+  optAll.value = 'todas'; optAll.textContent = '👥 Todos os capelães';
+  sel.appendChild(optAll);
+
+  [...eqSet].sort().forEach(e => {
+    const o = document.createElement('option');
+    o.value = e; o.textContent = '📍 ' + e;
+    sel.appendChild(o);
+  });
+
+  sel.value = S._integEqFiltro || 'todas';
+  sel.onchange = () => { S._integEqFiltro = sel.value; renderIntegLista(); };
+  fc.appendChild(sel);
+}
+
+// ═══════════════════════════════════════
+// MÓDULO EQUIPES — CRUD
+// ═══════════════════════════════════════
+async function loadEquipes() {
+  const ls = $('eq-mgr-lista');
+  if(!ls) return;
+  ls.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Carregando equipes...</p></div>';
+  try {
+    const eqs = await lerEquipes();
+    S.eqList = eqs;
+    renderEquipesMgr();
+  } catch(e) {
+    ls.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Erro: ${e.message}</p></div>`;
+  }
+}
+
+function renderEquipesMgr() {
+  const ls = $('eq-mgr-lista');
+  if(!ls) return;
+  const lista = S.eqList || [];
+  if(!lista.length) {
+    ls.innerHTML = '<div class="empty"><div class="ei">⚙️</div><p>Nenhuma equipe cadastrada.<br>Toque + para adicionar.</p></div>';
+    return;
+  }
+  ls.innerHTML = lista.map((eq, i) => {
+    const nome = eq.equipe || eq.nome || '';
+    const dia  = eq.diaSemana || '';
+    const hora = eq.hora || '';
+    const lider = eq.liderMatricula || '';
+    return `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:8px;border:1.5px solid var(--g2);display:flex;align-items:center;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:700;color:var(--navy)">${nome}</div>
+        <div style="font-size:12px;color:var(--g5);margin-top:3px">
+          ${dia ? '📅 '+dia : ''} ${hora ? '🕐 '+hora : ''} ${lider ? '· Líder mat: '+lider : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="abrirEditEquipe(${i})" style="border:none;background:var(--g2);color:var(--navy);border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">✏️</button>
+        <button onclick="confirmarExcluirEquipe(${i})" style="border:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirNovaEquipe() {
+  S._editEqIdx = null;
+  $('eq-form-titulo').textContent = 'Nova Equipe';
+  $('eq-f-nome').value = '';
+  $('eq-f-dia').value  = '';
+  $('eq-f-hora').value = '';
+  $('eq-f-lider').value = '';
+  $('sh-eq-form').classList.add('on');
+}
+
+function abrirEditEquipe(idx) {
+  const eq = S.eqList[idx];
+  if(!eq) return;
+  S._editEqIdx = idx;
+  $('eq-form-titulo').textContent = 'Editar Equipe';
+  $('eq-f-nome').value  = eq.equipe || eq.nome || '';
+  $('eq-f-dia').value   = eq.diaSemana || '';
+  $('eq-f-hora').value  = eq.hora || '';
+  $('eq-f-lider').value = eq.liderMatricula || '';
+  $('sh-eq-form').classList.add('on');
+}
+
+async function salvarEquipeForm() {
+  const nome  = $('eq-f-nome').value.trim();
+  const dia   = $('eq-f-dia').value.trim();
+  const hora  = $('eq-f-hora').value.trim();
+  const lider = $('eq-f-lider').value.trim();
+  if(!nome) { msg('Informe o nome da equipe.', 'er'); return; }
+
+  load('Salvando...');
+  try {
+    if(S._editEqIdx === null) {
+      // Nova equipe
+      await callScript({
+        acao: 'salvarEquipe',
+        dados: encodeURIComponent(JSON.stringify({ equipe: nome, diaSemana: dia, hora, liderMatricula: lider }))
+      });
+      msg('✅ Equipe cadastrada!', 'ok');
+    } else {
+      // Editar equipe existente
+      const eq = S.eqList[S._editEqIdx];
+      await callScript({
+        acao: 'atualizarEquipe',
+        dados: encodeURIComponent(JSON.stringify({
+          row: eq.row,
+          id:  eq.id,
+          equipe: nome, diaSemana: dia, hora, liderMatricula: lider
+        }))
+      });
+      msg('✅ Equipe atualizada!', 'ok');
+    }
+    unload();
+    $('sh-eq-form').classList.remove('on');
+    await loadEquipes();
+  } catch(e) {
+    unload();
+    msg('Erro: ' + e.message, 'er');
+  }
+}
+
+async function confirmarExcluirEquipe(idx) {
+  const eq = S.eqList[idx];
+  if(!eq) return;
+  if(!confirm('Excluir a equipe "' + (eq.equipe||eq.nome||'') + '"?\n\nOs membros vinculados a ela não serão apagados.')) return;
+  load('Excluindo...');
+  try {
+    await callScript({ acao: 'excluirEquipe', row: eq.row });
+    unload();
+    msg('✅ Equipe excluída.', 'ok');
+    await loadEquipes();
+  } catch(e) {
+    unload();
+    msg('Erro: ' + e.message, 'er');
+  }
 }
