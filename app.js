@@ -337,18 +337,14 @@ async function verificarPresencaHoje() {
     return;
   }
 
-  // Consultar servidor: matrícula + equipe + semana
+  // Consultar servidor pela data da visita + matrícula
   try {
-    const sw = getSemana();
     const res = await callScript({
       acao:      'verificarPresenca',
       matricula: S.user.matricula||S.user.codigo,
-      equipe:    encodeURIComponent(S.equipe||''),
-      semanaIni: fD(sw.ini),
-      semanaFim: fD(sw.fim)
+      data:      diaVis
     });
     if(res.registrado){
-      // Já registrou esta semana — mostrar verde independente de qual dia é hoje
       S._presencaRegistrada = true;
       S._presencaHora = res.hora || '';
       _setPresencaRegistrada(res.hora);
